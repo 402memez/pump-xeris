@@ -13,22 +13,22 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
     if (gameState === "flying") {
       const progress = Math.min(currentMultiplier / 15, 1);
       
-      // Smooth exponential curve
-      const x = 5 + progress * 90;
-      const y = 90 - (Math.pow(progress, 0.5) * 85);
+      // Start bottom-left (10, 95) and curve dramatically upward to top-right
+      const x = 10 + progress * 85; // Left to right
+      const y = 95 - Math.pow(progress, 0.4) * 90; // Aggressive upward curve
       
       setRocketPosition({ x, y });
 
       // Generate trail particles
-      if (Math.random() < 0.3) {
+      if (Math.random() < 0.4) {
         const newParticle = {
           id: Date.now() + Math.random(),
           x,
           y,
           opacity: 1,
-          size: Math.random() * 3 + 2,
+          size: Math.random() * 4 + 2,
         };
-        setParticles(prev => [...prev.slice(-20), newParticle]);
+        setParticles(prev => [...prev.slice(-30), newParticle]);
       }
 
       // Cash out demo
@@ -45,7 +45,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         }, 2500);
       }
     } else if (gameState === "waiting") {
-      setRocketPosition({ x: 5, y: 90 });
+      setRocketPosition({ x: 10, y: 95 }); // Bottom left starting position
       setParticles([]);
       setCashedOutPlayers([]);
     } else if (gameState === "crashed") {
@@ -167,7 +167,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
           className="absolute inset-0 w-full h-full"
         />
 
-        {/* Modern Rocket */}
+        {/* Futuristic Rocket */}
         <div
           className="absolute transition-all duration-75 ease-out z-20"
           style={{
@@ -178,32 +178,79 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         >
           {gameState === "flying" && (
             <div className="relative">
-              {/* Glow effect */}
-              <div className="absolute inset-0 blur-xl opacity-60">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 animate-pulse"></div>
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 blur-2xl opacity-50 -z-10">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-cyan-400 via-emerald-400 to-teal-500 animate-pulse"></div>
               </div>
               
-              {/* Modern rocket shape */}
+              {/* Inner glow */}
+              <div className="absolute inset-0 blur-lg opacity-70 -z-10">
+                <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-emerald-300 to-cyan-400"></div>
+              </div>
+              
+              {/* Futuristic rocket shape */}
               <div className="relative">
-                <svg className="w-10 h-10 sm:w-14 sm:h-14" viewBox="0 0 40 40" style={{
-                  filter: "drop-shadow(0 0 15px rgba(52, 211, 153, 0.8))",
+                <svg className="w-12 h-12 sm:w-16 sm:h-16" viewBox="0 0 50 50" style={{
+                  filter: "drop-shadow(0 0 20px rgba(52, 211, 153, 1)) drop-shadow(0 0 40px rgba(6, 182, 212, 0.6))",
                 }}>
                   <defs>
-                    <linearGradient id="rocketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{stopColor: "#34d399"}} />
-                      <stop offset="100%" style={{stopColor: "#14b8a6"}} />
+                    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor: "#06b6d4"}} />
+                      <stop offset="50%" style={{stopColor: "#10b981"}} />
+                      <stop offset="100%" style={{stopColor: "#34d399"}} />
                     </linearGradient>
+                    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor: "#fbbf24"}} />
+                      <stop offset="100%" style={{stopColor: "#f59e0b"}} />
+                    </linearGradient>
+                    <radialGradient id="glowGrad">
+                      <stop offset="0%" style={{stopColor: "#fff", stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: "#06b6d4", stopOpacity: 0.5}} />
+                    </radialGradient>
                   </defs>
-                  {/* Arrow/Triangle rocket */}
-                  <path d="M 20 2 L 35 38 L 20 32 L 5 38 Z" fill="url(#rocketGrad)" stroke="#10b981" strokeWidth="1.5" />
-                  <circle cx="20" cy="18" r="4" fill="#fff" opacity="0.9" />
-                  <path d="M 20 32 L 25 38 L 20 35 L 15 38 Z" fill="#fbbf24" opacity="0.8" />
+                  
+                  {/* Main body - sleek design */}
+                  <path d="M 25 5 L 35 25 L 35 35 L 30 45 L 20 45 L 15 35 L 15 25 Z" 
+                    fill="url(#bodyGrad)" 
+                    stroke="#0891b2" 
+                    strokeWidth="1.5"
+                    opacity="0.95"
+                  />
+                  
+                  {/* Cockpit window */}
+                  <ellipse cx="25" cy="18" rx="5" ry="6" fill="url(#glowGrad)" opacity="0.9" />
+                  <ellipse cx="25" cy="18" rx="3" ry="4" fill="#fff" opacity="0.7" />
+                  
+                  {/* Tech lines */}
+                  <line x1="20" y1="28" x2="30" y2="28" stroke="#0891b2" strokeWidth="1" opacity="0.6" />
+                  <line x1="20" y1="32" x2="30" y2="32" stroke="#0891b2" strokeWidth="1" opacity="0.6" />
+                  
+                  {/* Wing panels */}
+                  <path d="M 15 25 L 8 30 L 10 35 L 15 32 Z" fill="url(#bodyGrad)" stroke="#059669" strokeWidth="1" opacity="0.9" />
+                  <path d="M 35 25 L 42 30 L 40 35 L 35 32 Z" fill="url(#bodyGrad)" stroke="#059669" strokeWidth="1" opacity="0.9" />
+                  
+                  {/* Thruster ports with glow */}
+                  <rect x="20" y="42" width="3" height="6" rx="1" fill="#1e293b" />
+                  <rect x="27" y="42" width="3" height="6" rx="1" fill="#1e293b" />
+                  <circle cx="21.5" cy="46" r="1.5" fill="url(#accentGrad)" />
+                  <circle cx="28.5" cy="46" r="1.5" fill="url(#accentGrad)" />
+                  
+                  {/* Energy core accent */}
+                  <circle cx="25" cy="30" r="2" fill="#fbbf24" opacity="0.8" />
                 </svg>
               </div>
               
-              {/* Energy rings */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-emerald-400/30 rounded-full animate-ping"></div>
+              {/* Energy rings animation */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 border-2 border-cyan-400/40 rounded-full animate-ping"></div>
+                <div className="absolute w-16 h-16 sm:w-20 sm:h-20 border border-emerald-400/30 rounded-full animate-pulse"></div>
+              </div>
+              
+              {/* Speed lines */}
+              <div className="absolute right-full top-1/2 transform -translate-y-1/2 flex gap-1 opacity-60">
+                <div className="w-8 h-0.5 bg-gradient-to-r from-cyan-400 to-transparent animate-pulse"></div>
+                <div className="w-6 h-0.5 bg-gradient-to-r from-emerald-400 to-transparent animate-pulse" style={{animationDelay: "0.1s"}}></div>
+                <div className="w-4 h-0.5 bg-gradient-to-r from-teal-400 to-transparent animate-pulse" style={{animationDelay: "0.2s"}}></div>
               </div>
             </div>
           )}
