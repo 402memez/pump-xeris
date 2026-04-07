@@ -173,7 +173,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
           style={{
             left: `${rocketPosition.x}%`,
             top: `${rocketPosition.y}%`,
-            transform: "translate(-50%, -50%)",
+            transform: `translate(-50%, -50%) rotate(${rocketRotation}deg)`,
           }}
         >
           {gameState === "flying" && (
