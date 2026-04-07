@@ -3,7 +3,8 @@ import { TrendingUp, Zap } from "lucide-react";
 import { Card } from "./ui/card";
 
 const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
-  const [rocketPosition, setRocketPosition] = useState({ x: 5, y: 90 });
+  const [rocketPosition, setRocketPosition] = useState({ x: 5, y: 95 });
+  const [rocketRotation, setRocketRotation] = useState(0);
   const [cashedOutPlayers, setCashedOutPlayers] = useState([]);
   const [particles, setParticles] = useState([]);
   const canvasRef = useRef(null);
@@ -13,11 +14,33 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
     if (gameState === "flying") {
       const progress = Math.min(currentMultiplier / 15, 1);
       
-      // Start bottom-left (10, 95) and curve dramatically upward to top-right
-      const x = 10 + progress * 85; // Left to right
-      const y = 95 - Math.pow(progress, 0.4) * 90; // Aggressive upward curve
+      // Start bottom-left, move right then curve up
+      const x = 5 + progress * 90;
+      
+      // Trajectory: horizontal at start, then curves up at midpoint
+      let y;
+      if (progress < 0.5) {
+        // First half: mostly horizontal with slight rise
+        y = 95 - progress * 10;
+      } else {
+        // Second half: dramatic upward curve
+        const adjustedProgress = (progress - 0.5) * 2;
+        y = 90 - Math.pow(adjustedProgress, 0.6) * 85;
+      }
+      
+      // Calculate rotation based on trajectory
+      let rotation;
+      if (progress < 0.5) {
+        // First half: slight upward angle (0° to -15°)
+        rotation = -(progress * 30);
+      } else {
+        // Second half: increasingly steep angle (-15° to -75°)
+        const adjustedProgress = (progress - 0.5) * 2;
+        rotation = -15 - (adjustedProgress * 60);
+      }
       
       setRocketPosition({ x, y });
+      setRocketRotation(rotation);
 
       // Generate trail particles
       if (Math.random() < 0.4) {
@@ -45,7 +68,8 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         }, 2500);
       }
     } else if (gameState === "waiting") {
-      setRocketPosition({ x: 10, y: 95 }); // Bottom left starting position
+      setRocketPosition({ x: 5, y: 95 });
+      setRocketRotation(0);
       setParticles([]);
       setCashedOutPlayers([]);
     } else if (gameState === "crashed") {
@@ -107,15 +131,23 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         ctx.shadowColor = "rgba(52, 211, 153, 0.5)";
 
         ctx.beginPath();
-        ctx.moveTo(width * 0.05, height * 0.9);
+        ctx.moveTo(width * 0.05, height * 0.95);
         
-        // Create smooth curve
+        // Create smooth curve matching the trajectory
         const steps = 50;
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;
           const progress = t * Math.min(currentMultiplier / 15, 1);
           const px = 5 + progress * 90;
-          const py = 90 - (Math.pow(progress, 0.5) * 85);
+          
+          let py;
+          if (progress < 0.5) {
+            py = 95 - progress * 10;
+          } else {
+            const adjustedProgress = (progress - 0.5) * 2;
+            py = 90 - Math.pow(adjustedProgress, 0.6) * 85;
+          }
+          
           ctx.lineTo((px / 100) * width, (py / 100) * height);
         }
         ctx.stroke();
@@ -209,7 +241,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
                     </radialGradient>
                   </defs>
                   
-                  {/* Main body - sleek design */}
+                  {/* Main body */}
                   <path d="M 25 5 L 35 25 L 35 35 L 30 45 L 20 45 L 15 35 L 15 25 Z" 
                     fill="url(#bodyGrad)" 
                     stroke="#0891b2" 
@@ -229,18 +261,18 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
                   <path d="M 15 25 L 8 30 L 10 35 L 15 32 Z" fill="url(#bodyGrad)" stroke="#059669" strokeWidth="1" opacity="0.9" />
                   <path d="M 35 25 L 42 30 L 40 35 L 35 32 Z" fill="url(#bodyGrad)" stroke="#059669" strokeWidth="1" opacity="0.9" />
                   
-                  {/* Thruster ports with glow */}
+                  {/* Thruster ports */}
                   <rect x="20" y="42" width="3" height="6" rx="1" fill="#1e293b" />
                   <rect x="27" y="42" width="3" height="6" rx="1" fill="#1e293b" />
                   <circle cx="21.5" cy="46" r="1.5" fill="url(#accentGrad)" />
                   <circle cx="28.5" cy="46" r="1.5" fill="url(#accentGrad)" />
                   
-                  {/* Energy core accent */}
+                  {/* Energy core */}
                   <circle cx="25" cy="30" r="2" fill="#fbbf24" opacity="0.8" />
                 </svg>
               </div>
               
-              {/* Energy rings animation */}
+              {/* Energy rings */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 border-2 border-cyan-400/40 rounded-full animate-ping"></div>
                 <div className="absolute w-16 h-16 sm:w-20 sm:h-20 border border-emerald-400/30 rounded-full animate-pulse"></div>
