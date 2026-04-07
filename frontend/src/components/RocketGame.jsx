@@ -13,15 +13,24 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
     if (gameState === "flying") {
       const progress = Math.min(currentMultiplier / 10, 1);
       
-      // Better curve calculation for smoother upward trajectory
-      const x = 10 + progress * 80;
-      const y = 80 - Math.pow(progress, 0.7) * 70;
+      // Dramatic upward curve calculation
+      const x = 10 + progress * 75;
+      const y = 80 - Math.pow(progress, 0.6) * 75; // More aggressive upward curve
       
-      // Calculate rotation based on trajectory slope
-      const rotation = -45 - (progress * 30);
+      // Calculate rotation based on actual trajectory slope (derivative)
+      // dy/dx gives us the slope, and atan gives us the angle
+      const dx = 0.01; // small step for derivative
+      const prevProgress = Math.max(0, progress - 0.05);
+      const prevX = 10 + prevProgress * 75;
+      const prevY = 80 - Math.pow(prevProgress, 0.6) * 75;
+      
+      // Calculate angle from slope
+      const deltaY = y - prevY;
+      const deltaX = x - prevX;
+      const angle = Math.atan2(-deltaY, deltaX) * (180 / Math.PI); // negative because y increases downward
       
       setRocketPosition({ x, y });
-      setRocketRotation(rotation);
+      setRocketRotation(angle); // Direct angle based on trajectory
       
       // Store trajectory points for drawing
       trajectoryPoints.current.push({ x, y });
@@ -46,7 +55,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
       }
     } else if (gameState === "waiting") {
       setRocketPosition({ x: 10, y: 80 });
-      setRocketRotation(-45);
+      setRocketRotation(-45); // Default angle pointing up-right
       trajectoryPoints.current = [];
       setCashedOutPlayers([]);
     } else if (gameState === "crashed") {
