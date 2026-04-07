@@ -72,3 +72,374 @@ input[type="number"] {
         transform: translateY(-50%) scale(1.05);
     }
 }
+
+/* Premium Cinematic Rocket Effects */
+.rocket-flame-primary {
+    background: linear-gradient(90deg, 
+        rgba(251, 191, 36, 1) 0%,
+        rgba(249, 115, 22, 0.9) 20%,
+        rgba(234, 88, 12, 0.7) 40%,
+        rgba(239, 68, 68, 0.4) 60%,
+        rgba(220, 38, 38, 0.2) 80%,
+        transparent 100%
+    );
+    filter: blur(4px);
+    animation: turbulentFlame 0.08s infinite alternate, flameWave 0.3s infinite ease-in-out;
+    mix-blend-mode: screen;
+}
+
+.rocket-flame-secondary {
+    background: linear-gradient(90deg,
+        rgba(253, 224, 71, 0.9) 0%,
+        rgba(251, 191, 36, 0.7) 30%,
+        rgba(249, 115, 22, 0.5) 60%,
+        transparent 100%
+    );
+    filter: blur(6px);
+    animation: turbulentFlame 0.12s infinite alternate-reverse, flameWave 0.4s infinite ease-in-out;
+    mix-blend-mode: screen;
+}
+
+.rocket-particles {
+    background: radial-gradient(ellipse,
+        rgba(253, 224, 71, 0.8) 0%,
+        rgba(251, 191, 36, 0.6) 15%,
+        rgba(249, 115, 22, 0.4) 30%,
+        rgba(239, 68, 68, 0.2) 50%,
+        transparent 70%
+    );
+    filter: blur(8px);
+    animation: particleBurst 0.15s infinite alternate, expand 0.5s infinite ease-out;
+    mix-blend-mode: screen;
+}
+
+.rocket-heat-distortion {
+    background: radial-gradient(circle,
+        rgba(251, 191, 36, 0.4) 0%,
+        rgba(249, 115, 22, 0.2) 40%,
+        transparent 70%
+    );
+    filter: blur(12px);
+    animation: heatShimmer 0.2s infinite alternate;
+    mix-blend-mode: overlay;
+}
+
+@keyframes turbulentFlame {
+    0% {
+        transform: translateY(-50%) scaleX(1) scaleY(1);
+        opacity: 0.95;
+    }
+    100% {
+        transform: translateY(-50%) scaleX(1.15) scaleY(0.92);
+        opacity: 1;
+    }
+}
+
+@keyframes flameWave {
+    0%, 100% {
+        transform: translateY(-50%) translateX(0);
+    }
+    50% {
+        transform: translateY(-50%) translateX(-3px);
+    }
+}
+
+@keyframes particleBurst {
+    0% {
+        transform: translateY(-50%) scale(0.95);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-50%) scale(1.1);
+        opacity: 1;
+    }
+}
+
+@keyframes expand {
+    0% {
+        width: 100%;
+    }
+    100% {
+        width: 110%;
+    }
+}
+
+@keyframes heatShimmer {
+    0% {
+        transform: translateY(-50%) translateY(-2px);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-50%) translateY(2px);
+        opacity: 0.8;
+    }
+}
+
+/* 3D Rocket Body Effects */
+.rocket-body {
+    transform-style: preserve-3d;
+    animation: rocketVibration 0.1s infinite alternate;
+}
+
+.rocket-glow {
+    background: radial-gradient(circle,
+        rgba(249, 115, 22, 0.6) 0%,
+        rgba(234, 88, 12, 0.4) 40%,
+        transparent 70%
+    );
+    filter: blur(15px);
+    width: 150%;
+    height: 150%;
+    left: -25%;
+    top: -25%;
+    animation: glowPulse 1s infinite ease-in-out;
+}
+
+.rocket-pulse {
+    background: radial-gradient(circle,
+        rgba(251, 191, 36, 0.4) 0%,
+        rgba(249, 115, 22, 0.2) 50%,
+        transparent 70%
+    );
+    filter: blur(20px);
+    width: 180%;
+    height: 180%;
+    left: -40%;
+    top: -40%;
+    animation: glowPulse 1.5s infinite ease-in-out alternate;
+}
+
+@keyframes rocketVibration {
+    0% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    100% {
+        transform: translateY(-0.5px) rotate(-0.3deg);
+    }
+}
+
+@keyframes glowPulse {
+    0% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+}
+
+/* Premium Neon Multiplier Text */
+.premium-multiplier {
+    text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 80px currentColor,
+        0 0 120px currentColor;
+    animation: neonFlicker 2s infinite alternate, textGlow 3s infinite ease-in-out;
+    font-weight: 900;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes neonFlicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        filter: brightness(1);
+    }
+    20%, 24%, 55% {
+        filter: brightness(0.95);
+    }
+}
+
+@keyframes textGlow {
+    0%, 100% {
+        text-shadow: 
+            0 0 10px currentColor,
+            0 0 20px currentColor,
+            0 0 40px currentColor,
+            0 0 80px currentColor;
+    }
+    50% {
+        text-shadow: 
+            0 0 15px currentColor,
+            0 0 30px currentColor,
+            0 0 60px currentColor,
+            0 0 120px currentColor,
+            0 0 160px currentColor;
+    }
+}
+
+/* Premium Live Badge */
+.premium-live-badge {
+    background: linear-gradient(135deg, 
+        rgba(6, 182, 212, 0.3) 0%, 
+        rgba(8, 145, 178, 0.2) 100%
+    );
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(6, 182, 212, 0.5);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    color: #06b6d4;
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+    box-shadow: 
+        0 0 15px rgba(6, 182, 212, 0.4),
+        inset 0 0 10px rgba(6, 182, 212, 0.1);
+    animation: liveBadgePulse 2s infinite ease-in-out;
+}
+
+@keyframes liveBadgePulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 15px rgba(6, 182, 212, 0.4),
+            inset 0 0 10px rgba(6, 182, 212, 0.1);
+    }
+    50% {
+        box-shadow: 
+            0 0 25px rgba(6, 182, 212, 0.6),
+            inset 0 0 15px rgba(6, 182, 212, 0.2);
+    }
+}
+
+/* Premium Metal & Glass Status Badge */
+.premium-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg,
+        rgba(55, 65, 81, 0.9) 0%,
+        rgba(31, 41, 55, 0.95) 100%
+    );
+    backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(156, 163, 175, 0.3);
+    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 0 20px rgba(0, 0, 0, 0.2);
+    color: #d1d5db;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.premium-indicator {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 
+        0 0 8px currentColor,
+        inset 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.premium-indicator::before {
+    content: '';
+    position: absolute;
+    inset: 20%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+    animation: indicatorShine 2s infinite ease-in-out;
+}
+
+.premium-indicator-flying {
+    background: radial-gradient(circle, #10b981 0%, #059669 100%);
+    animation: indicatorPulse 1s infinite ease-in-out;
+}
+
+.premium-indicator-waiting {
+    background: radial-gradient(circle, #eab308 0%, #ca8a04 100%);
+    animation: indicatorPulse 1.5s infinite ease-in-out;
+}
+
+.premium-indicator-crashed {
+    background: radial-gradient(circle, #ef4444 0%, #dc2626 100%);
+}
+
+@keyframes indicatorPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes indicatorShine {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Premium Crash Text */
+.premium-crash-text {
+    text-shadow: 
+        0 0 10px #ef4444,
+        0 0 20px #ef4444,
+        0 0 40px #ef4444,
+        0 0 80px #dc2626;
+    animation: crashShake 0.5s infinite, crashPulse 1s infinite;
+}
+
+@keyframes crashShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-2px) rotate(-1deg);
+    }
+    75% {
+        transform: translateX(2px) rotate(1deg);
+    }
+}
+
+@keyframes crashPulse {
+    0%, 100% {
+        opacity: 1;
+        filter: brightness(1);
+    }
+    50% {
+        opacity: 0.8;
+        filter: brightness(1.2);
+    }
+}
+
+/* Cash Out Jump Animation */
+@keyframes cash-out-jump {
+    0% {
+        transform: translate(-50%, -50%) translateY(0) scale(0.5);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(-20px) scale(1);
+    }
+    100% {
+        transform: translate(-50%, -50%) translateY(-150px) scale(0.8);
+        opacity: 0;
+    }
+}
+
+.animate-cash-out-jump {
+    animation: cash-out-jump 3s ease-out forwards;
+}
+
+@keyframes parachute-float {
+    0%, 100% {
+        transform: translateY(0) rotate(-5deg);
+    }
+    50% {
+        transform: translateY(-5px) rotate(5deg);
+    }
+}
+
+.animate-parachute-float {
+    animation: parachute-float 1s infinite ease-in-out;
+}
