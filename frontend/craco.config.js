@@ -38,6 +38,11 @@ let webpackConfig = {
     },
     configure: (webpackConfig) => {
 
+      // Disable CI mode warnings as errors for Railway deployment
+      if (process.env.CI) {
+        webpackConfig.devtool = false;
+      }
+
       // Add Node.js polyfills for xeris-sdk and crypto
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,
@@ -45,9 +50,10 @@ let webpackConfig = {
         stream: require.resolve('stream-browserify'),
         buffer: require.resolve('buffer'),
         process: require.resolve('process/browser'),
+        vm: require.resolve('vm-browserify'),
+        path: require.resolve('path-browserify'),
+        os: require.resolve('os-browserify/browser'),
         fs: false, // fs is not available in browser
-        path: false,
-        os: false,
       };
 
       // Fix ESM module resolution for process/browser
