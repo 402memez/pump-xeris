@@ -1,6 +1,6 @@
-import "@/App.css";
+import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import RocketGamePage from "./pages/RocketGamePage";
+import CrashGame from "./pages/CrashGame";
 import { Toaster } from "./components/ui/sonner";
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<RocketGamePage />} />
+          <Route path="/" element={<CrashGame />} />
         </Routes>
       </BrowserRouter>
       <Toaster />
