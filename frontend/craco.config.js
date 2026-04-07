@@ -38,6 +38,35 @@ let webpackConfig = {
     },
     configure: (webpackConfig) => {
 
+      // Add Node.js polyfills for xeris-sdk and crypto
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        crypto: require.resolve('crypto-browserify'),
+        stream: require.resolve('stream-browserify'),
+        buffer: require.resolve('buffer'),
+        process: require.resolve('process/browser'),
+        fs: false, // fs is not available in browser
+        path: false,
+        os: false,
+      };
+
+      // Fix ESM module resolution for process/browser
+      webpackConfig.module.rules.push({
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      });
+
+      // Provide global Buffer and process
+      const webpack = require('webpack');
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+        })
+      );
+
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
           ...webpackConfig.watchOptions,

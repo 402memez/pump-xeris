@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { XerisDApp } from 'xeris-sdk';
 import { Rocket, Coins, MessageSquare, Menu, X, RefreshCw, Download, Database, Settings, LogOut, Shield } from 'lucide-react';
 
-const SOCKET_URL = "https://Crash-production-ae86.up.railway.app";
+const SOCKET_URL = process.env.REACT_APP_BACKEND_URL;
 const HOUSE_WALLET = "8kRk2h36YmeTAM9kTn4BCSShVEBBUwCxh3ckATqGUveL";
 
 const dapp = new XerisDApp();
@@ -35,25 +35,24 @@ export default function CrashGame() {
     try {
       setIsRefreshing(true);
       
-      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
-      
-      if (!response.ok) {
-        throw new Error(`Backend Error: HTTP ${response.status}\n(If this says 404, Railway is still building your Python server!)`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(`Node Error: ${data.error}`);
-      }
-
-      if (data.balance !== undefined) {
-        setBalance(data.balance);
-      } else {
-        throw new Error(`Unknown Data Format: ${JSON.stringify(data)}`);
-      }
+      // Use SDK's built-in getBalance method
+      const lamports = await dapp.getBalance(currentKey);
+      const xrs = lamports / 1_000_000_000; // Convert lamports to XRS
+      setBalance(xrs);
     } catch (err) {
-      alert("Proxy Fetch Error:\n\n" + err.message);
+      console.error("Balance fetch error:", err);
+      // Fallback to backend proxy if SDK fails
+      try {
+        const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.balance !== undefined) {
+            setBalance(data.balance);
+          }
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback balance fetch failed:", fallbackErr);
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -100,19 +99,19 @@ export default function CrashGame() {
     if (!walletConnected) return;
     
     try {
-      alert("Routing 10 XRS request through Python backend...");
       const currentKey = pubKey || (dapp.publicKey ? dapp.publicKey.toString() : '');
       
+      // Request 10 XRS = 10,000,000,000 lamports
       const response = await fetch(`${SOCKET_URL}/api/xeris/faucet/${currentKey}`);
       
       if (!response.ok) {
-        throw new Error(`Backend Error: HTTP ${response.status}\n(Railway might still be building)`);
+        throw new Error(`Faucet request failed: HTTP ${response.status}`);
       }
 
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      alert("Airdrop Queued. Refreshing in 5 seconds...");
+      alert("✅ Airdrop successful! 10 XRS sent to your wallet.\nRefreshing balance in 5 seconds...");
       setTimeout(syncBalance, 5000); 
     } catch (err) {
       alert("Faucet Error:\n\n" + err.message);

@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Rocket, Menu, X, Wallet } from "lucide-react";
-import { io } from 'socket.io-client';
-import { XerisDApp } from 'xeris-sdk';
+import { Rocket, Menu, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import RocketGame from "../components/RocketGame";
 import BettingPanel from "../components/BettingPanel";
@@ -11,76 +9,25 @@ import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
 import Chat from "../components/Chat";
 import {
+  mockGameHistory,
+  mockLiveBets,
   mockLeaderboard,
+  mockUserStats,
   mockChatMessages,
+  generateRandomMultiplier,
+  updateLiveBetsMultiplier,
 } from "../mock/gameData";
-
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL;
-const dapp = new XerisDApp();
 
 const RocketGamePage = () => {
   const [gameState, setGameState] = useState("waiting"); // waiting, flying, crashed
   const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
-  const multiplierRef = useRef(1.0);
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(mockUserStats.balance);
   const [activeBet, setActiveBet] = useState(null);
-  const [liveBets, setLiveBets] = useState([]);
-  const [gameHistory, setGameHistory] = useState([]);
+  const [liveBets, setLiveBets] = useState(mockLiveBets);
+  const [gameHistory, setGameHistory] = useState(mockGameHistory);
   const [countdown, setCountdown] = useState(5);
   const [chatMessages, setChatMessages] = useState(mockChatMessages);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // Xeris wallet states
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [pubKey, setPubKey] = useState('');
-  const socketRef = useRef(null);
-
-  // User stats for display
-  const userStats = {
-    balance: balance,
-    totalWagered: 0,
-    totalWon: 0,
-    biggestWin: 0,
-    gamesPlayed: 0,
-  };
-
-  // Connect to Xeris wallet
-  const connectWallet = useCallback(async () => {
-    try {
-      const provider = await XerisDApp.waitForProvider(3000);
-      if (!provider) {
-        console.log("No Xeris wallet found");
-        return;
-      }
-      
-      await dapp.connect();
-      setWalletConnected(true);
-      setPubKey(dapp.publicKey?.toString() || '');
-      
-      // Sync balance using SDK
-      try {
-        const lamports = await dapp.getBalance(dapp.publicKey?.toString());
-        const xrs = lamports / 1_000_000_000;
-        setBalance(xrs);
-      } catch (err) {
-        console.error("Balance fetch error:", err);
-      }
-      
-      dapp.on("accountChanged", async (newKey) => {
-        setPubKey(newKey?.toString() || '');
-        const lamports = await dapp.getBalance(newKey?.toString());
-        setBalance(lamports / 1_000_000_000);
-      });
-
-      dapp.on("disconnect", () => {
-        setWalletConnected(false);
-        setPubKey('');
-        setBalance(0);
-      });
-    } catch (err) {
-      console.error("Wallet connection failed:", err);
-    }
-  }, []);
 
   // Memoized handlers to avoid dependency issues
   const handleCashOut = useCallback((multiplier = currentMultiplier) => {
@@ -93,7 +40,7 @@ const RocketGamePage = () => {
     const newChatMessage = {
       id: Date.now(),
       username: "You",
-      text: `Cashed out at ${multiplier.toFixed(2)}x for ${winAmount.toFixed(2)} XRS! 💰`,
+      text: `Cashed out at ${multiplier.toFixed(2)}x for $${winAmount.toFixed(2)}! 💰`,
       timestamp: new Date(),
       type: "win",
     };
@@ -102,80 +49,91 @@ const RocketGamePage = () => {
     setActiveBet(null);
   }, [activeBet, currentMultiplier]);
 
-  // Socket.io connection
+  // Game loop
   useEffect(() => {
-    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
-    socketRef.current = socket;
-    
-    socket.on('connect', () => {
-      console.log('Connected to game server');
-    });
+    let interval;
 
-    socket.on('multiplier_update', (data) => {
-      const val = typeof data === 'object' ? data.multiplier : data;
-      multiplierRef.current = val;
-      setCurrentMultiplier(val);
-      setGameState('flying');
-      
-      // Update active bet
-      if (activeBet) {
-        setActiveBet(prev => ({
-          ...prev,
-          currentMultiplier: val,
-        }));
+    if (gameState === "waiting") {
+      interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            setGameState("flying");
+            setCurrentMultiplier(1.0);
+            return 5;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (gameState === "flying") {
+      interval = setInterval(() => {
+        setCurrentMultiplier((prev) => {
+          const newMultiplier = prev + 0.01;
 
-        // Auto cashout check
-        if (activeBet.autoCashout && val >= activeBet.autoCashout) {
-          handleCashOut(val);
-        }
-      }
-    });
+          // Random crash logic
+          const crashChance = Math.random();
+          const shouldCrash =
+            (newMultiplier > 2 && crashChance < 0.02) ||
+            (newMultiplier > 5 && crashChance < 0.05) ||
+            (newMultiplier > 10 && crashChance < 0.1) ||
+            newMultiplier > 20;
 
-    socket.on('game_state', (data) => {
-      const status = typeof data === 'object' ? data.status || data.state : data;
-      
-      if (status === 'crashed' || status === 'crash') {
-        setGameState('crashed');
-        
-        // Add to history
-        const newHistory = {
-          id: Date.now(),
-          multiplier: multiplierRef.current,
-          timestamp: new Date(),
-          crashed: true,
-        };
-        setGameHistory(prev => [newHistory, ...prev].slice(0, 20));
+          if (shouldCrash) {
+            setGameState("crashed");
+            
+            // Add to history
+            const newHistory = [
+              {
+                id: Date.now(),
+                multiplier: newMultiplier,
+                timestamp: new Date(),
+                crashed: true,
+              },
+              ...gameHistory,
+            ].slice(0, 20);
+            setGameHistory(newHistory);
 
-        // Reset active bet if player didn't cash out
-        if (activeBet) {
-          setActiveBet(null);
-        }
+            // Reset active bet if player didn't cash out
+            if (activeBet) {
+              setActiveBet(null);
+            }
 
-        // Reset to waiting after crash
-        setTimeout(() => {
-          setCurrentMultiplier(1.0);
-          multiplierRef.current = 1.0;
-          setGameState('waiting');
-        }, 3000);
-      } else if (status === 'waiting') {
-        setGameState('waiting');
-        setCurrentMultiplier(1.0);
-        multiplierRef.current = 1.0;
-      }
-    });
+            // Reset to waiting after crash
+            setTimeout(() => {
+              setGameState("waiting");
+              setCountdown(5);
+            }, 3000);
 
-    socket.on('countdown', (data) => {
-      setCountdown(data.seconds || data);
-    });
+            return newMultiplier;
+          }
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from game server');
-    });
+          // Update active bet multiplier
+          if (activeBet) {
+            setActiveBet({
+              ...activeBet,
+              currentMultiplier: newMultiplier,
+            });
 
-    return () => {
-      if (socket) socket.disconnect();
-    };
-  }, [activeBet, handleCashOut]);
+            // Auto cashout check
+            if (
+              activeBet.autoCashout &&
+              newMultiplier >= activeBet.autoCashout
+            ) {
+              handleCashOut(newMultiplier);
+            }
+          }
+
+          // Update live bets
+          setLiveBets((prev) =>
+            updateLiveBetsMultiplier(prev, newMultiplier)
+          );
+
+          return newMultiplier;
+        });
+      }, 50);
+    }
+
+    return () => clearInterval(interval);
+  }, [gameState, activeBet, gameHistory, handleCashOut]);
 
   const handlePlaceBet = (betAmount, autoCashoutValue) => {
     if (betAmount > balance) return;
@@ -186,16 +144,6 @@ const RocketGamePage = () => {
       currentMultiplier: 1.0,
       autoCashout: autoCashoutValue,
     });
-    
-    // Add chat message
-    const newChatMessage = {
-      id: Date.now(),
-      username: "You",
-      text: `Placed bet: ${betAmount} XRS${autoCashoutValue ? ` (Auto @ ${autoCashoutValue}x)` : ''}`,
-      timestamp: new Date(),
-      type: "bet",
-    };
-    setChatMessages((prev) => [...prev, newChatMessage]);
   };
 
   const handleSendChatMessage = (message) => {
@@ -225,23 +173,12 @@ const RocketGamePage = () => {
               </div>
             </div>
 
-            {/* Wallet Connection & Balance */}
-            <div className="flex items-center space-x-2">
-              {walletConnected ? (
-                <div className="bg-gray-800/50 px-3 py-1.5 rounded-lg">
-                  <div className="text-xs text-gray-400">Balance</div>
-                  <div className="text-sm font-bold text-cyan-400">{balance.toFixed(2)} XRS</div>
-                </div>
-              ) : (
-                <button
-                  onClick={connectWallet}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-4 py-2 rounded-lg text-sm font-semibold text-white flex items-center space-x-2 transition-all"
-                >
-                  <Wallet className="w-4 h-4" />
-                  <span className="hidden sm:inline">Connect Wallet</span>
-                  <span className="sm:hidden">Connect</span>
-                </button>
-              )}
+            {/* Mobile Balance Display */}
+            <div className="flex items-center space-x-2 sm:hidden">
+              <div className="bg-gray-800/50 px-3 py-1.5 rounded-lg">
+                <div className="text-xs text-gray-400">Balance</div>
+                <div className="text-sm font-bold text-cyan-400">${balance.toLocaleString()}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -286,7 +223,7 @@ const RocketGamePage = () => {
               <TabsTrigger value="history" className="text-xs">History</TabsTrigger>
             </TabsList>
             <TabsContent value="stats" className="mt-4">
-              <UserStats stats={userStats} />
+              <UserStats stats={mockUserStats} />
             </TabsContent>
             <TabsContent value="live" className="mt-4">
               <LiveBets bets={liveBets} currentMultiplier={currentMultiplier} />
@@ -309,7 +246,7 @@ const RocketGamePage = () => {
         <div className="hidden lg:grid grid-cols-12 gap-6">
           {/* Left Sidebar - User Stats */}
           <div className="col-span-3 space-y-6">
-            <UserStats stats={userStats} />
+            <UserStats stats={mockUserStats} />
           </div>
 
           {/* Center - Game Area */}
@@ -363,7 +300,7 @@ const RocketGamePage = () => {
           <div className="text-center text-gray-500 text-xs sm:text-sm">
             <p>© 2025 Rocket Crash. Play responsibly.</p>
             <p className="text-[10px] sm:text-xs mt-1">
-              Powered by Xeris Blockchain
+              This is a demonstration game. No real money involved.
             </p>
           </div>
         </div>
