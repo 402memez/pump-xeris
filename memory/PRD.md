@@ -40,6 +40,7 @@ A web-based rocket crash gambling game where players bet on a rocket's flight an
    - Game history with crash points
    - Leaderboard with top 8 players
    - Player statistics dashboard
+   - **Live chat with message types and auto-messages on wins** ✨ NEW
 
 ### Technical Requirements
 - React 19 with hooks for state management
@@ -102,7 +103,18 @@ A web-based rocket crash gambling game where players bet on a rocket's flight an
    - Responsive grid layout
    - Header and footer sections
 
-8. **Mock Data** (`/frontend/src/mock/gameData.js`)
+8. **Live Chat** (`/frontend/src/components/Chat.jsx`) ✨ NEW
+   - Real-time message display
+   - Message input with character counter (200 max)
+   - User avatars with color coding
+   - Timestamp for each message
+   - Message type indicators (win/loss/system/chat)
+   - Auto-scroll to latest messages
+   - Send button with validation
+   - Toast notifications for sent messages
+   - Automatic chat messages on cash-out events
+
+9. **Mock Data** (`/frontend/src/mock/gameData.js`)
    - Game history (8 previous rounds)
    - Live bets (5 active players)
    - Leaderboard data (8 top players)
@@ -128,7 +140,8 @@ A web-based rocket crash gambling game where players bet on a rocket's flight an
 │   ├── LiveBets.jsx (Active bets feed)
 │   ├── GameHistory.jsx (Previous rounds)
 │   ├── Leaderboard.jsx (Top players)
-│   └── UserStats.jsx (Player statistics)
+│   ├── UserStats.jsx (Player statistics)
+│   └── Chat.jsx (Live chat) ✨ NEW
 ├── pages/
 │   └── RocketGamePage.jsx (Main container)
 └── mock/
@@ -151,11 +164,13 @@ WAITING (5s countdown) → FLYING (rocket active) → CRASHED → WAITING
 
 ### P1 Features (Enhancements)
 - [ ] Sound effects (rocket launch, cash out, crash)
-- [ ] Chat functionality for players
+- [x] **Chat functionality for players** ✅ COMPLETED
 - [ ] Betting history for individual users
 - [ ] Provably fair algorithm display
 - [ ] Mobile-optimized responsive design
 - [ ] Animation improvements (particle effects)
+- [ ] Chat moderation and filter for inappropriate messages
+- [ ] Emoji picker for chat messages
 
 ### P2 Features (Advanced)
 - [ ] Multi-bet functionality (place multiple bets per round)

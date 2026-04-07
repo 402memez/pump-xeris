@@ -56,3 +56,63 @@ export const updateLiveBetsMultiplier = (bets, currentMultiplier) => {
     potentialWin: (bet.betAmount * currentMultiplier).toFixed(2)
   }));
 };
+
+// Mock chat messages
+export const mockChatMessages = [
+  {
+    id: 1,
+    username: "RocketMaster",
+    text: "Just won 5x! 🚀",
+    timestamp: new Date(Date.now() - 300000),
+    type: "win",
+  },
+  {
+    id: 2,
+    username: "CryptoKing",
+    text: "Anyone else betting big this round?",
+    timestamp: new Date(Date.now() - 240000),
+    type: "chat",
+  },
+  {
+    id: 3,
+    username: "LuckyStrike",
+    text: "Lost at 1.2x... so close!",
+    timestamp: new Date(Date.now() - 180000),
+    type: "loss",
+  },
+  {
+    id: 4,
+    username: "MoonShot",
+    text: "Going all in! 💰",
+    timestamp: new Date(Date.now() - 120000),
+    type: "chat",
+  },
+  {
+    id: 5,
+    username: "System",
+    text: "New high score: 15.67x by RocketMaster!",
+    timestamp: new Date(Date.now() - 60000),
+    type: "system",
+  },
+  {
+    id: 6,
+    username: "SkyHigher",
+    text: "This game is addictive! 🎮",
+    timestamp: new Date(Date.now() - 30000),
+    type: "chat",
+  },
+  {
+    id: 7,
+    username: "GambleGod",
+    text: "Cashed out at 3.5x, playing it safe",
+    timestamp: new Date(Date.now() - 15000),
+    type: "win",
+  },
+  {
+    id: 8,
+    username: "SpaceAce",
+    text: "Good luck everyone! 🍀",
+    timestamp: new Date(Date.now() - 5000),
+    type: "chat",
+  },
+];

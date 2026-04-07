@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Rocket, Menu } from "lucide-react";
 import RocketGame from "../components/RocketGame";
 import BettingPanel from "../components/BettingPanel";
@@ -6,11 +6,13 @@ import LiveBets from "../components/LiveBets";
 import GameHistory from "../components/GameHistory";
 import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
+import Chat from "../components/Chat";
 import {
   mockGameHistory,
   mockLiveBets,
   mockLeaderboard,
   mockUserStats,
+  mockChatMessages,
   generateRandomMultiplier,
   updateLiveBetsMultiplier,
 } from "../mock/gameData";
@@ -23,6 +25,27 @@ const RocketGamePage = () => {
   const [liveBets, setLiveBets] = useState(mockLiveBets);
   const [gameHistory, setGameHistory] = useState(mockGameHistory);
   const [countdown, setCountdown] = useState(5);
+  const [chatMessages, setChatMessages] = useState(mockChatMessages);
+
+  // Memoized handlers to avoid dependency issues
+  const handleCashOut = useCallback((multiplier = currentMultiplier) => {
+    if (!activeBet) return;
+
+    const winAmount = activeBet.betAmount * multiplier;
+    setBalance((prev) => prev + winAmount);
+    
+    // Add chat message for cash out
+    const newChatMessage = {
+      id: Date.now(),
+      username: "You",
+      text: `Cashed out at ${multiplier.toFixed(2)}x for $${winAmount.toFixed(2)}! 💰`,
+      timestamp: new Date(),
+      type: "win",
+    };
+    setChatMessages((prev) => [...prev, newChatMessage]);
+    
+    setActiveBet(null);
+  }, [activeBet, currentMultiplier]);
 
   // Game loop
   useEffect(() => {
@@ -108,7 +131,7 @@ const RocketGamePage = () => {
     }
 
     return () => clearInterval(interval);
-  }, [gameState, activeBet, gameHistory]);
+  }, [gameState, activeBet, gameHistory, handleCashOut]);
 
   const handlePlaceBet = (betAmount, autoCashoutValue) => {
     if (betAmount > balance) return;
@@ -121,12 +144,15 @@ const RocketGamePage = () => {
     });
   };
 
-  const handleCashOut = (multiplier = currentMultiplier) => {
-    if (!activeBet) return;
-
-    const winAmount = activeBet.betAmount * multiplier;
-    setBalance((prev) => prev + winAmount);
-    setActiveBet(null);
+  const handleSendChatMessage = (message) => {
+    const newMessage = {
+      id: Date.now(),
+      username: "You",
+      text: message,
+      timestamp: new Date(),
+      type: "chat",
+    };
+    setChatMessages((prev) => [...prev, newMessage]);
   };
 
   return (
@@ -190,6 +216,11 @@ const RocketGamePage = () => {
           {/* Right Sidebar */}
           <div className="lg:col-span-3 space-y-6">
             <LiveBets bets={liveBets} currentMultiplier={currentMultiplier} />
+            <Chat 
+              messages={chatMessages} 
+              onSendMessage={handleSendChatMessage}
+              currentUser="You"
+            />
           </div>
         </div>
 
