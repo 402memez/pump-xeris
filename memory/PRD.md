@@ -53,12 +53,16 @@ A web-based rocket crash gambling game where players bet on a rocket's flight an
 **Date**: December 2025
 
 ### Frontend (Complete with Mock Data)
-1. **Main Game Component** (`/frontend/src/components/RocketGame.jsx`)
-   - Canvas-based rocket animation
-   - Grid background with trajectory line
+1. **Main Game Component** (`/frontend/src/components/RocketGame.jsx`) - ✨ ENHANCED
+   - Canvas-based rocket animation with **improved trajectory curve**
+   - **Animated flame trail** with flickering effects
+   - Smooth upward curved trajectory (not sloppy!)
+   - Dynamic rocket rotation based on flight path
+   - Grid background with glowing trajectory line
    - Dynamic multiplier display with color coding
-   - Rocket position updates based on multiplier
-   - Glow effects and flame animations
+   - Rocket position updates with smooth transitions
+   - Enhanced glow effects and layered flame animations
+   - **Mobile responsive** with adaptive sizing
 
 2. **Betting Panel** (`/frontend/src/components/BettingPanel.jsx`)
    - Balance display
@@ -126,8 +130,9 @@ A web-based rocket crash gambling game where players bet on a rocket's flight an
 - **Accent Colors**: Orange/rose for CTAs and rocket flames
 - **Typography**: Clear hierarchy with proper font weights
 - **Spacing**: Consistent padding and margins
-- **Animations**: Smooth transitions, pulse effects, color changes
+- **Animations**: Smooth transitions, pulse effects, color changes, **flame flicker**
 - **Responsive**: Grid-based layout for different screen sizes
+- **Mobile-First**: Tabs layout for mobile with touch-friendly controls ✨ NEW
 
 ## Architecture
 
