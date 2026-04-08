@@ -52,7 +52,17 @@ const RocketGamePage = () => {
   const [balance, setBalance] = useState(0);
   const [activeBet, setActiveBet] = useState(null);
   const [liveBets, setLiveBets] = useState([]);
-  const [gameHistory, setGameHistory] = useState([]);
+  const [gameHistory, setGameHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem("xeris_history");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+  });
+
+  // Save to memory whenever history updates
+  useEffect(() => {
+    localStorage.setItem("xeris_history", JSON.stringify(gameHistory));
+  }, [gameHistory]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [countdown, setCountdown] = useState(5);
   const [chatMessages, setChatMessages] = useState([]);
@@ -94,7 +104,14 @@ const RocketGamePage = () => {
       const response = await fetch(`${SOCKET_URL}/api/game/history?limit=10`); // Reduced from 20
       if (response.ok) {
         const data = await response.json();
-        setGameHistory(data.history || []);
+        if (data.history && data.history.length > 0) {
+          setGameHistory(prev => {
+            const merged = [...data.history, ...prev];
+            // Filter duplicates to prevent weird glitching
+            const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+            return unique.slice(0, 20);
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to fetch game history:", err);

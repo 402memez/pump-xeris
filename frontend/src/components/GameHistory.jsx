@@ -45,7 +45,7 @@ const GameHistory = ({ history }) => {
                 <div
                   key={game.id}
                   className={`${getMultiplierBg(
-                    game.multiplier
+                    (game.multiplier || game.crash_point || 1.0)
                   )} hover:bg-gray-800 p-3 rounded-lg border border-gray-700 hover:border-cyan-500/50 transition-all duration-300`}
                 >
                   <div className="flex items-center justify-between">
@@ -56,10 +56,10 @@ const GameHistory = ({ history }) => {
                       <div>
                         <div
                           className={`text-xl font-bold ${getMultiplierColor(
-                            game.multiplier
+                            (game.multiplier || game.crash_point || 1.0)
                           )}`}
                         >
-                          {game.multiplier.toFixed(2)}x
+                          {(game.multiplier || game.crash_point || 1.0).toFixed(2)}x
                         </div>
                         <div className="text-xs text-gray-500">
                           {formatTime(game.timestamp)}
