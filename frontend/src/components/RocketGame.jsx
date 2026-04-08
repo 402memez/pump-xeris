@@ -167,7 +167,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
 
         {/* Futuristic Rocket */}
         <div
-          className="absolute transition-all duration-75 ease-out z-20"
+          className="absolute z-20"
           style={{
             left: `${rocketPosition.x}%`,
             top: `${rocketPosition.y}%`,
