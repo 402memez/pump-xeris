@@ -322,23 +322,26 @@ async def game_loop():
                     'multiplier': game_engine.current_multiplier,
                     'game_id': game_engine.current_game_id
                 })
-                await sio.emit('game_state', game_engine.get_state())
+                # Only emit game_state every 300ms to reduce traffic
+                if int(elapsed) % 300 == 0:
+                    await sio.emit('game_state', game_engine.get_state())
                 
-                # Broadcast live bets
-                live_bets = [
-                    {
-                        'wallet': addr[:8] + '...' + addr[-4:],
-                        'amount': bet['amount'],
-                        'auto_cashout': bet.get('auto_cashout'),
-                        'current_multiplier': game_engine.current_multiplier,
-                        'potential_win': bet['amount'] * game_engine.current_multiplier
-                    }
-                    for addr, bet in game_engine.active_bets.items()
-                    if addr not in game_engine.cashed_out
-                ]
-                await sio.emit('live_bets', {'bets': live_bets})
+                # Broadcast live bets every 500ms instead of every tick
+                if int(elapsed) % 500 == 0:
+                    live_bets = [
+                        {
+                            'wallet': addr[:8] + '...' + addr[-4:],
+                            'amount': bet['amount'],
+                            'auto_cashout': bet.get('auto_cashout'),
+                            'current_multiplier': game_engine.current_multiplier,
+                            'potential_win': bet['amount'] * game_engine.current_multiplier
+                        }
+                        for addr, bet in game_engine.active_bets.items()
+                        if addr not in game_engine.cashed_out
+                    ]
+                    await sio.emit('live_bets', {'bets': live_bets})
                 
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(0.1)  # 100ms instead of 50ms for better performance
 
             game_engine.game_state = "crashed"
             game_engine.current_multiplier = game_engine.crash_point

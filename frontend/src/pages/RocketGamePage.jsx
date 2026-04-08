@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Rocket, Menu, X, Wallet, RefreshCw, Download, Settings, LogOut, Shield, Database, Info } from "lucide-react";
 import { io } from 'socket.io-client';
 import { XerisDApp } from 'xeris-sdk';
@@ -37,19 +37,19 @@ const RocketGamePage = () => {
   const [autoEject, setAutoEject] = useState(2.0);
   const socketRef = useRef(null);
 
-  // User stats for display
-  const userStats = {
+  // Memoize user stats to prevent recalculation
+  const userStats = useMemo(() => ({
     balance: balance,
     totalWagered: totalWagered,
     totalWon: totalWon,
     biggestWin: gameHistory.length > 0 ? Math.max(...gameHistory.map(h => h.multiplier * (h.bet_amount || 0))) : 0,
     gamesPlayed: gameHistory.length,
-  };
+  }), [balance, totalWagered, totalWon, gameHistory]);
 
-  // Fetch real game history from backend
+  // Fetch real game history from backend (throttled)
   const fetchGameHistory = useCallback(async () => {
     try {
-      const response = await fetch(`${SOCKET_URL}/api/game/history`);
+      const response = await fetch(`${SOCKET_URL}/api/game/history?limit=10`); // Reduced from 20
       if (response.ok) {
         const data = await response.json();
         setGameHistory(data.history || []);
@@ -59,10 +59,10 @@ const RocketGamePage = () => {
     }
   }, []);
 
-  // Fetch real leaderboard from backend
+  // Fetch real leaderboard from backend (throttled)
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const response = await fetch(`${SOCKET_URL}/api/leaderboard`);
+      const response = await fetch(`${SOCKET_URL}/api/leaderboard?limit=5`); // Reduced from 10
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data.leaderboard || []);
@@ -262,14 +262,25 @@ const RocketGamePage = () => {
 
   // Socket.io connection
   useEffect(() => {
-    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    const socket = io(SOCKET_URL, { 
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
     socketRef.current = socket;
     
     socket.on('connect', () => {
       console.log('Connected to game server');
     });
 
+    // Throttle multiplier updates to reduce re-renders
+    let lastUpdate = Date.now();
     socket.on('multiplier_update', (data) => {
+      const now = Date.now();
+      if (now - lastUpdate < 100) return; // Skip updates faster than 100ms
+      lastUpdate = now;
+      
       const val = typeof data === 'object' ? data.multiplier : data;
       multiplierRef.current = val;
       setCurrentMultiplier(val);
