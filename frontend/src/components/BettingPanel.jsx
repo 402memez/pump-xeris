@@ -7,7 +7,7 @@ import { Switch } from "./ui/switch";
 import { Minus, Plus, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
-const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) => {
+const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet, currentMultiplier }) => {
   const [betAmount, setBetAmount] = useState(100);
   const [autoCashout, setAutoCashout] = useState(false);
   const [autoCashoutValue, setAutoCashoutValue] = useState(2.0);
@@ -48,7 +48,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
   const handleCashOut = () => {
     if (activeBet) {
       onCashOut();
-      toast.success(`Cashed out at ${activeBet.currentMultiplier.toFixed(2)}x!`);
+      toast.success(`Cashed out at ${(currentMultiplier || 1).toFixed(2)}x!`);
     }
   };
 
@@ -155,7 +155,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
               onClick={handleCashOut}
               className="w-full h-14 bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-500 hover:to-rose-500 text-white font-bold text-lg shadow-lg hover:shadow-orange-500/50 transition-all duration-300 animate-pulse"
             >
-              CASH OUT {(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)} XRS
+              CASH OUT {(activeBet.betAmount * (currentMultiplier || 1)).toFixed(2)} XRS
             </Button>
           )}
           {activeBet && gameState === "waiting" && (
@@ -169,10 +169,10 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
         {activeBet && gameState === "flying" && (
           <div className="bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 p-4 rounded-lg border border-emerald-700/50">
             <div className="text-sm text-gray-400 mb-1">Potential Win</div>
-            <div className="text-2xl font-bold text-emerald-400">{(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)}
+            <div className="text-2xl font-bold text-emerald-400">{(activeBet.betAmount * (currentMultiplier || 1)).toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Bet: {activeBet.betAmount} XRS × {activeBet.currentMultiplier.toFixed(2)}x
+              Bet: {activeBet.betAmount} XRS × {(currentMultiplier || 1).toFixed(2)}x
             </div>
           </div>
         )}

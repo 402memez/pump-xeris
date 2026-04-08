@@ -254,13 +254,18 @@ const RocketGamePage = () => {
   }, [walletConnected]);
 
   // Memoized handlers to avoid dependency issues
-  const handleCashOut = useCallback((multiplier = currentMultiplier) => {
-    if (!activeBet) return;
+  const activeBetRef = useRef(activeBet);
+  useEffect(() => { activeBetRef.current = activeBet; }, [activeBet]);
 
-    const winAmount = activeBet.betAmount * multiplier;
-    setBalance((prev) => prev + winAmount);
+  const handleCashOut = useCallback((overrideMultiplier) => {
+    const multiplier = typeof overrideMultiplier === 'number' ? overrideMultiplier : multiplierRef.current;
+    const currentActiveBet = activeBetRef.current;
     
-    // Add chat message for cash out
+    if (!currentActiveBet) return;
+
+    const winAmount = currentActiveBet.betAmount * multiplier;
+    setBalance((prev) => prev + winAmount);
+
     const newChatMessage = {
       id: Date.now(),
       username: "You",
@@ -269,9 +274,9 @@ const RocketGamePage = () => {
       type: "win",
     };
     setChatMessages((prev) => [...prev, newChatMessage]);
-    
+
     setActiveBet(null);
-  }, [activeBet, currentMultiplier]);
+  }, []);
 
   // Socket.io connection
   useEffect(() => {
@@ -318,7 +323,7 @@ const RocketGamePage = () => {
       }
       
       // Auto cashout check (lightweight)
-      if (activeBet?.autoCashout && val >= activeBet.autoCashout) {
+      if (activeBetRef.current?.autoCashout && val >= activeBetRef.current.autoCashout) {
         handleCashOut(val);
       }
     });
@@ -339,9 +344,7 @@ const RocketGamePage = () => {
         setGameHistory(prev => [newHistory, ...prev].slice(0, 20));
 
         // Reset active bet if player didn't cash out
-        if (activeBet) {
-          setActiveBet(null);
-        }
+        if (activeBetRef.current) { setActiveBet(null); }
 
         // Reset to waiting after crash
         setTimeout(() => {
@@ -394,7 +397,7 @@ const RocketGamePage = () => {
       if (rafId) cancelAnimationFrame(rafId);
       if (socket) socket.disconnect();
     };
-  }, [activeBet, handleCashOut, fetchGameHistory, fetchLeaderboard]);
+  }, [fetchGameHistory, fetchLeaderboard]);
 
   // Fetch user stats when wallet connects
   useEffect(() => {
@@ -706,7 +709,7 @@ const RocketGamePage = () => {
             gameState={gameState}
             onPlaceBet={handlePlaceBet}
             onCashOut={handleCashOut}
-            activeBet={activeBet}
+            activeBet={activeBet} currentMultiplier={currentMultiplier}
           />
 
           {/* Tabs for Mobile */}
@@ -767,7 +770,7 @@ const RocketGamePage = () => {
               gameState={gameState}
               onPlaceBet={handlePlaceBet}
               onCashOut={handleCashOut}
-              activeBet={activeBet}
+              activeBet={activeBet} currentMultiplier={currentMultiplier}
             />
           </div>
 
