@@ -11,8 +11,15 @@ import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
 import Chat from "../components/Chat";
 
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL;
+// Auto-detect backend URL: Use env variable if set, otherwise use current origin
+// This ensures the app works on any deployment (Railway, Vercel, localhost, etc.)
+const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 const dapp = new XerisDApp();
+
+// DEBUG: Log configuration
+console.log('🔧 Backend URL:', SOCKET_URL);
+console.log('🔧 Current origin:', window.location.origin);
+console.log('🔧 REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
 
 const RocketGamePage = () => {
   const [gameState, setGameState] = useState("waiting"); // waiting, flying, crashed
@@ -108,17 +115,35 @@ const RocketGamePage = () => {
 
     try {
       setIsRefreshing(true);
-      console.log('🔄 Fetching balance via backend proxy for:', pubKey);
+      const apiUrl = `${SOCKET_URL}/api/xeris/balance/${pubKey}`;
+      console.log('🔄 Fetching balance from:', apiUrl);
+      console.log('🔄 Wallet address:', pubKey);
       
       // Frontend (HTTPS) → Backend (HTTPS) → Xeris Node (HTTP)
       // This avoids browser Mixed Content blocking
-      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${pubKey}`);
+      const response = await fetch(apiUrl);
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', response.headers.get('content-type'));
       
       if (!response.ok) {
-        throw new Error(`Backend Error: HTTP ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Backend returned error:', errorText);
+        throw new Error(`Backend Error: HTTP ${response.status}\n\nResponse: ${errorText.substring(0, 200)}`);
       }
 
-      const data = await response.json();
+      // Get raw response text first to debug
+      const rawText = await response.text();
+      console.log('📄 Raw response:', rawText.substring(0, 200));
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.error('❌ JSON parse error:', parseErr);
+        throw new Error(`Invalid JSON Response:\n\n${rawText.substring(0, 300)}\n\nAPI URL was: ${apiUrl}`);
+      }
+      
       console.log('✅ Backend proxy response:', data);
       
       if (data.error) {
