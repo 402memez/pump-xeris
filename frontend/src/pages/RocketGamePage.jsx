@@ -11,18 +11,38 @@ import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
 import Chat from "../components/Chat";
 
-// ULTRA-OPTIMIZED: Auto-detect backend URL with proper protocol
+// ULTRA-OPTIMIZED: Auto-detect backend URL with bulletproof protocol handling
 const getBackendURL = () => {
+  // If env variable is set, use it
   if (process.env.REACT_APP_BACKEND_URL) {
-    return process.env.REACT_APP_BACKEND_URL;
+    const url = process.env.REACT_APP_BACKEND_URL;
+    // Ensure it has protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `https://${url}`;
+    }
+    return url;
   }
-  const protocol = window.location.protocol;
+  
+  // Fallback: construct from window.location with guaranteed protocol
+  const protocol = window.location.protocol || 'https:';
   const host = window.location.host;
+  
+  // Double-check we have both parts
+  if (!host) {
+    console.error('Unable to determine backend URL');
+    return 'https://pump-xeris-production-7aef.up.railway.app'; // Emergency fallback
+  }
+  
   return `${protocol}//${host}`;
 };
 
 const SOCKET_URL = getBackendURL();
 const dapp = new XerisDApp();
+
+// Production: Minimal logging
+if (process.env.NODE_ENV === 'development') {
+  console.log('Backend URL:', SOCKET_URL);
+}
 
 const RocketGamePage = () => {
   const [gameState, setGameState] = useState("waiting"); // waiting, flying, crashed
@@ -115,11 +135,18 @@ const RocketGamePage = () => {
 
     try {
       setIsRefreshing(true);
-      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${pubKey}`);
+      const apiUrl = `${SOCKET_URL}/api/xeris/balance/${pubKey}`;
+      
+      // Validate URL has protocol
+      if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+        throw new Error(`Invalid API URL (missing protocol): ${apiUrl}\n\nSOCKET_URL was: ${SOCKET_URL}`);
+      }
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Backend Error: HTTP ${response.status}`);
+        throw new Error(`Backend Error: HTTP ${response.status}\n\nURL: ${apiUrl}`);
       }
 
       const rawText = await response.text();
@@ -130,7 +157,7 @@ const RocketGamePage = () => {
       }
     } catch (err) {
       console.error("Balance fetch error:", err.message);
-      alert("Balance Fetch Error:\n\n" + err.message);
+      alert("Balance Fetch Error:\n\n" + err.message + "\n\nPlease refresh the page and try again.");
     } finally {
       setIsRefreshing(false);
     }
@@ -261,7 +288,6 @@ const RocketGamePage = () => {
     // ULTRA-OPTIMIZED: Use refs for animation (no re-renders)
     let rafId = null;
     let targetMultiplier = 1.0;
-    const multiplierDisplayRef = useRef(null);
     
     const animateMultiplier = () => {
       const current = multiplierRef.current;
