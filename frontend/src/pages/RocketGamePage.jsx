@@ -90,13 +90,16 @@ const RocketGamePage = () => {
   };
 
   // Memoize user stats to prevent recalculation
-  const userStats = useMemo(() => ({
-    balance: balance,
-    totalWagered: totalWagered,
-    totalWon: totalWon,
-    biggestWin: gameHistory.length > 0 ? Math.max(...gameHistory.map(h => h.multiplier * (h.bet_amount || 0))) : 0,
-    gamesPlayed: gameHistory.length,
-  }), [balance, totalWagered, totalWon, gameHistory]);
+  const [userStats, setUserStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem("xeris_personal_stats");
+      return saved ? JSON.parse(saved) : { totalBets: 0, totalWins: 0, totalLosses: 0, totalWagered: 0, biggestWin: 0 };
+    } catch (e) { return { totalBets: 0, totalWins: 0, totalLosses: 0, totalWagered: 0, biggestWin: 0 }; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("xeris_personal_stats", JSON.stringify(userStats));
+  }, [userStats]);
 
   // Fetch real game history from backend (throttled)
   const fetchGameHistory = useCallback(async () => {
@@ -282,6 +285,7 @@ const RocketGamePage = () => {
 
     const winAmount = currentActiveBet.betAmount * multiplier;
     setBalance((prev) => prev + winAmount);
+    setUserStats(p => ({ ...p, totalWins: (p.totalWins || 0) + 1, biggestWin: Math.max((p.biggestWin || 0), winAmount) }));
 
     const newChatMessage = {
       id: Date.now(),
@@ -361,7 +365,7 @@ const RocketGamePage = () => {
         setGameHistory(prev => [newHistory, ...prev].slice(0, 20));
 
         // Reset active bet if player didn't cash out
-        if (activeBetRef.current) { setActiveBet(null); }
+        if (activeBetRef.current) { setUserStats(p => ({ ...p, totalLosses: (p.totalLosses || 0) + 1 })); setActiveBet(null); }
 
         // Reset to waiting after crash
         setTimeout(() => {
@@ -432,6 +436,7 @@ const RocketGamePage = () => {
       currentMultiplier: 1.0,
       autoCashout: autoCashoutValue,
     });
+    setUserStats(p => ({ ...p, totalBets: (p.totalBets || 0) + 1, totalWagered: (p.totalWagered || 0) + betAmount }));
     
     // Add chat message
     const newChatMessage = {

@@ -6,28 +6,28 @@ const UserStats = ({ stats }) => {
   const statCards = [
     {
       label: "Total Bets",
-      value: stats.totalBets,
+      value: stats.totalBets || 0,
       icon: Target,
       color: "text-cyan-400",
       bg: "bg-cyan-900/20",
     },
     {
       label: "Total Wins",
-      value: stats.totalWins,
+      value: stats.totalWins || 0,
       icon: TrendingUp,
       color: "text-emerald-400",
       bg: "bg-emerald-900/20",
     },
     {
       label: "Total Losses",
-      value: stats.totalLosses,
+      value: stats.totalLosses || 0,
       icon: TrendingDown,
       color: "text-rose-400",
       bg: "bg-rose-900/20",
     },
     {
       label: "Win Rate",
-      value: `${stats.winRate}%`,
+      value: `${stats.totalBets > 0 ? Math.round(((stats.totalWins || 0) / stats.totalBets) * 100) : 0}%`,
       icon: Target,
       color: "text-orange-400",
       bg: "bg-orange-900/20",
@@ -71,7 +71,7 @@ const UserStats = ({ stats }) => {
               <DollarSign className="w-5 h-5 text-emerald-400" />
               <span className="text-gray-300 text-sm">Biggest Win</span>
             </div>
-            <span className="text-emerald-400 font-bold text-lg">{stats.biggestWin.toLocaleString()}
+            <span className="text-emerald-400 font-bold text-lg">{(stats.biggestWin || 0).toLocaleString()}
             </span>
           </div>
 
@@ -80,7 +80,7 @@ const UserStats = ({ stats }) => {
               <Target className="w-5 h-5 text-cyan-400" />
               <span className="text-gray-300 text-sm">Total Wagered</span>
             </div>
-            <span className="text-cyan-400 font-bold text-lg">{stats.totalWagered.toLocaleString()}
+            <span className="text-cyan-400 font-bold text-lg">{(stats.totalWagered || 0).toLocaleString()}
             </span>
           </div>
         </div>
