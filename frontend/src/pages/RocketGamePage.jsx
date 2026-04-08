@@ -35,6 +35,7 @@ const RocketGamePage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showWalletMenu, setShowWalletMenu] = useState(false);
   const [autoEject, setAutoEject] = useState(2.0);
+  const [devMode, setDevMode] = useState(false);
   const socketRef = useRef(null);
 
   // Welcome screen state
@@ -101,6 +102,12 @@ const RocketGamePage = () => {
 
   // Sync balance from blockchain via backend proxy
   const syncBalance = useCallback(async () => {
+    // Dev mode bypass for testing
+    if (devMode) {
+      setBalance(100.00);
+      return;
+    }
+
     const currentKey = pubKey || (dapp.publicKey ? dapp.publicKey.toString() : '');
     if (!currentKey) {
       console.log('❌ No wallet key available for balance sync');
@@ -114,7 +121,7 @@ const RocketGamePage = () => {
       const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
       
       if (!response.ok) {
-        throw new Error(`Backend Error: HTTP ${response.status}\n(If this says 404, Railway is still building your Python server!)`);
+        throw new Error(`Backend Error: HTTP ${response.status}\n(If this says 404, Railway is still building your Python server. Give it 2 minutes!)`);
       }
 
       const data = await response.json();
@@ -136,7 +143,7 @@ const RocketGamePage = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [pubKey]);
+  }, [pubKey, devMode]);
 
   // Connect to Xeris wallet
   const connectWallet = useCallback(async () => {
@@ -198,6 +205,13 @@ const RocketGamePage = () => {
 
   // Request testnet tokens from faucet
   const requestFaucet = useCallback(async () => {
+    // Dev mode bypass
+    if (devMode) {
+      setBalance(prev => prev + 10);
+      alert("✅ Dev Mode: Added 10 XRS to your balance!");
+      return;
+    }
+    
     if (!walletConnected) return;
     
     try {
@@ -218,7 +232,7 @@ const RocketGamePage = () => {
     } catch (err) {
       alert("Faucet Error:\n\n" + err.message);
     }
-  }, [walletConnected, pubKey, syncBalance]);
+  }, [walletConnected, pubKey, syncBalance, devMode]);
 
   // Sign authentication message
   const handleSignMessage = useCallback(async () => {
