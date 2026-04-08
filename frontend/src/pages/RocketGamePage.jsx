@@ -37,7 +37,6 @@ const getBackendURL = () => {
 };
 
 const SOCKET_URL = 'https://stunning-nurturing-production-5e0e.up.railway.app';
-const dapp = new XerisDApp();
 
 // Production: Minimal logging
 if (process.env.NODE_ENV === 'development') {
