@@ -83,7 +83,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
       setParticles([]);
       setCashedOutPlayers([]);
     }
-  }, [currentMultiplier, gameState]);
+  }, [currentMultiplier, gameState, cashedOutPlayers.length]);
 
   // Canvas animation
   useEffect(() => {
