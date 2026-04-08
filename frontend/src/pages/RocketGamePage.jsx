@@ -414,7 +414,7 @@ const RocketGamePage = () => {
       if (rafId) cancelAnimationFrame(rafId);
       if (socket) socket.disconnect();
     };
-  }, [fetchGameHistory, fetchLeaderboard]);
+  }, [fetchGameHistory, fetchLeaderboard, handleCashOut]);
 
   // Fetch user stats when wallet connects
   useEffect(() => {
