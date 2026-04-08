@@ -253,29 +253,6 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
           )}
         </div>
 
-        {/* Cashed Out Players */}
-        {cashedOutPlayers.map(player => (
-          <div
-            key={player.id}
-            className="absolute z-30 animate-cash-out-jump"
-            style={{
-              left: `${player.x}%`,
-              top: `${player.y}%`,
-            }}
-          >
-            <div className="flex flex-col items-center gap-1">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs sm:text-sm font-bold px-3 py-1.5 rounded-full shadow-lg"
-                style={{
-                  boxShadow: "0 0 20px rgba(52, 211, 153, 0.6)",
-                }}
-              >
-                +{player.multiplier}×
-              </div>
-              <Zap className="w-4 h-4 text-yellow-400" />
-            </div>
-          </div>
-        ))}
-
         {/* Multiplier Display */}
         <div className="absolute top-6 sm:top-10 left-1/2 transform -translate-x-1/2 z-10">
           {gameState === "flying" && (
