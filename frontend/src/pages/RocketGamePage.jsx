@@ -11,14 +11,28 @@ import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
 import Chat from "../components/Chat";
 
-// Auto-detect backend URL: Use env variable if set, otherwise use current origin
-// This ensures the app works on any deployment (Railway, Vercel, localhost, etc.)
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+// Auto-detect backend URL with proper protocol handling
+// Ensure we always have a valid URL with protocol
+const getBackendURL = () => {
+  // If env variable is set, use it
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
+  }
+  
+  // Fallback: construct URL from window.location
+  const protocol = window.location.protocol; // 'https:' or 'http:'
+  const host = window.location.host; // 'domain.com:port'
+  return `${protocol}//${host}`;
+};
+
+const SOCKET_URL = getBackendURL();
 const dapp = new XerisDApp();
 
 // DEBUG: Log configuration
 console.log('🔧 Backend URL:', SOCKET_URL);
-console.log('🔧 Current origin:', window.location.origin);
+console.log('🔧 Window origin:', window.location.origin);
+console.log('🔧 Window protocol:', window.location.protocol);
+console.log('🔧 Window host:', window.location.host);
 console.log('🔧 REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
 
 const RocketGamePage = () => {
