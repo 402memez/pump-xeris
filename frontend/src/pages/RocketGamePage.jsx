@@ -1,3 +1,4 @@
+window.onerror = function(msg) { alert("CRASH REPORT: " + msg); };
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Rocket, Menu, X, Wallet, RefreshCw, Download, Settings, LogOut, Shield, Database, Info } from "lucide-react";
 import { io } from 'socket.io-client';
