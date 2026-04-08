@@ -119,15 +119,18 @@ backend:
   
   - task: "Xeris blockchain proxy endpoints (balance and faucet)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented /api/xeris/balance/{address} and /api/xeris/faucet/{address} endpoints using correct Xeris RPC URLs from SDK documentation (port 50008 for balance, port 56001 for faucet)."
+      - working: true
+        agent: "fork_agent"
+        comment: "VERIFIED via curl testing. Balance endpoint returns proper JSON {balance: 0.0} with HTTP 200. Faucet endpoint also responding correctly. Backend proxy successfully bypasses Mixed Content (HTTPS->HTTP) security blocks."
   
   - task: "REST API endpoints for game state"
     implemented: true
@@ -203,3 +206,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Fixed critical blocker issues: 1) Updated hardcoded SOCKET_URL to use environment variable, 2) Added webpack polyfills for xeris-sdk blockchain integration, 3) Frontend now compiles and loads successfully. Backend Socket.io game loop is running and emitting events. Need to test: Socket.io connection, game state updates, Xeris proxy endpoints, and wallet integration flow."
+  - agent: "fork_agent"
+    message: "Phase 1 COMPLETE: Backend proxy endpoints verified working. Manual testing confirms /api/xeris/balance/{address} returns valid JSON. Frontend loads with beautiful 'Welcome Xerians' screen. Ready for comprehensive backend testing via testing_agent_v3."
