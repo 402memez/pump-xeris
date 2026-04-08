@@ -99,33 +99,45 @@ const RocketGamePage = () => {
     }
   }, [walletConnected, pubKey]);
 
-  // Sync balance from blockchain using Xeris SDK
+  // Sync balance via backend proxy (solves HTTPS → HTTP mixed content issue)
   const syncBalance = useCallback(async () => {
-    if (!walletConnected || !dapp.publicKey) {
+    if (!walletConnected || !pubKey) {
       console.log('❌ Wallet not connected');
       return;
     }
 
     try {
       setIsRefreshing(true);
-      console.log('🔄 Fetching balance for connected wallet...');
+      console.log('🔄 Fetching balance via backend proxy for:', pubKey);
       
-      // Use SDK's getBalance() - no parameters needed for connected wallet
-      const balanceInLamports = await dapp.getBalance();
-      console.log('✅ Got balance in lamports:', balanceInLamports);
+      // Frontend (HTTPS) → Backend (HTTPS) → Xeris Node (HTTP)
+      // This avoids browser Mixed Content blocking
+      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${pubKey}`);
       
-      // Convert lamports to XRS (1 XRS = 1,000,000,000 lamports)
-      const balanceInXrs = balanceInLamports / 1_000_000_000;
-      console.log('✅ Converted to XRS:', balanceInXrs);
+      if (!response.ok) {
+        throw new Error(`Backend Error: HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Backend proxy response:', data);
       
-      setBalance(balanceInXrs);
+      if (data.error) {
+        throw new Error(`Xeris Node Error: ${data.error}`);
+      }
+
+      if (data.balance !== undefined) {
+        console.log('✅ Setting balance to:', data.balance, 'XRS');
+        setBalance(data.balance);
+      } else {
+        throw new Error(`Invalid response format: ${JSON.stringify(data)}`);
+      }
     } catch (err) {
       console.error("❌ Balance fetch error:", err);
       alert("Balance Fetch Error:\n\n" + err.message);
     } finally {
       setIsRefreshing(false);
     }
-  }, [walletConnected]);
+  }, [walletConnected, pubKey]);
 
   // Connect to Xeris wallet
   const connectWallet = useCallback(async () => {
