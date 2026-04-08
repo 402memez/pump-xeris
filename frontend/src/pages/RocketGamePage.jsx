@@ -35,7 +35,6 @@ const RocketGamePage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showWalletMenu, setShowWalletMenu] = useState(false);
   const [autoEject, setAutoEject] = useState(2.0);
-  const [devMode, setDevMode] = useState(false);
   const socketRef = useRef(null);
 
   // Welcome screen state
@@ -100,50 +99,33 @@ const RocketGamePage = () => {
     }
   }, [walletConnected, pubKey]);
 
-  // Sync balance from blockchain via backend proxy
+  // Sync balance from blockchain using Xeris SDK
   const syncBalance = useCallback(async () => {
-    // Dev mode bypass for testing
-    if (devMode) {
-      setBalance(100.00);
-      return;
-    }
-
-    const currentKey = pubKey || (dapp.publicKey ? dapp.publicKey.toString() : '');
-    if (!currentKey) {
-      console.log('❌ No wallet key available for balance sync');
+    if (!walletConnected || !dapp.publicKey) {
+      console.log('❌ Wallet not connected');
       return;
     }
 
     try {
       setIsRefreshing(true);
-      console.log('🔄 Syncing balance via backend proxy for:', currentKey);
+      console.log('🔄 Fetching balance for connected wallet...');
       
-      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
+      // Use SDK's getBalance() - no parameters needed for connected wallet
+      const balanceInLamports = await dapp.getBalance();
+      console.log('✅ Got balance in lamports:', balanceInLamports);
       
-      if (!response.ok) {
-        throw new Error(`Backend Error: HTTP ${response.status}\n(If this says 404, Railway is still building your Python server. Give it 2 minutes!)`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Backend proxy response:', data);
+      // Convert lamports to XRS (1 XRS = 1,000,000,000 lamports)
+      const balanceInXrs = balanceInLamports / 1_000_000_000;
+      console.log('✅ Converted to XRS:', balanceInXrs);
       
-      if (data.error) {
-        throw new Error(`Node Error: ${data.error}`);
-      }
-
-      if (data.balance !== undefined) {
-        console.log('✅ Setting balance to:', data.balance);
-        setBalance(data.balance);
-      } else {
-        throw new Error(`Unknown Data Format: ${JSON.stringify(data)}`);
-      }
+      setBalance(balanceInXrs);
     } catch (err) {
-      console.error("❌ Proxy Fetch Error:", err);
+      console.error("❌ Balance fetch error:", err);
       alert("Balance Fetch Error:\n\n" + err.message);
     } finally {
       setIsRefreshing(false);
     }
-  }, [pubKey, devMode]);
+  }, [walletConnected]);
 
   // Connect to Xeris wallet
   const connectWallet = useCallback(async () => {
@@ -202,37 +184,6 @@ const RocketGamePage = () => {
       console.error("Disconnect failed:", err);
     }
   }, []);
-
-  // Request testnet tokens from faucet
-  const requestFaucet = useCallback(async () => {
-    // Dev mode bypass
-    if (devMode) {
-      setBalance(prev => prev + 10);
-      alert("✅ Dev Mode: Added 10 XRS to your balance!");
-      return;
-    }
-    
-    if (!walletConnected) return;
-    
-    try {
-      const currentKey = pubKey || (dapp.publicKey ? dapp.publicKey.toString() : '');
-      
-      // Request 10 XRS = 10,000,000,000 lamports
-      const response = await fetch(`${SOCKET_URL}/api/xeris/faucet/${currentKey}`);
-      
-      if (!response.ok) {
-        throw new Error(`Faucet request failed: HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      alert("✅ Airdrop successful! 10 XRS sent to your wallet.\nRefreshing balance in 5 seconds...");
-      setTimeout(() => syncBalance(), 5000);
-    } catch (err) {
-      alert("Faucet Error:\n\n" + err.message);
-    }
-  }, [walletConnected, pubKey, syncBalance, devMode]);
 
   // Sign authentication message
   const handleSignMessage = useCallback(async () => {
@@ -536,14 +487,6 @@ const RocketGamePage = () => {
                   >
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span>{isRefreshing ? 'Refreshing...' : 'Refresh Balance'}</span>
-                  </button>
-
-                  <button
-                    onClick={requestFaucet}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Get 10 Testnet XRS</span>
                   </button>
 
                   <button
