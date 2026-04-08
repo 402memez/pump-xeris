@@ -228,7 +228,7 @@ async def cash_out(sid, data):
         await db.bets.update_one(
             {"game_id": game_engine.current_game_id, "wallet_address": wallet_address},
             {"$set": {
-                "status": "cashed_out",
+                "status": "won",
                 "cashout_multiplier": result['multiplier'],
                 "winnings": result['winnings']
             }}
@@ -241,6 +241,32 @@ async def cash_out(sid, data):
         await sio.emit('game_state', game_engine.get_state())
     else:
         await sio.emit('cashout_error', {'error': 'Cannot cash out'}, room=sid)
+
+@sio.event
+async def send_message(sid, data):
+    """Handle chat messages from clients"""
+    username = data.get('username', 'Anonymous')
+    text = data.get('text', '')
+    
+    if not text.strip():
+        return
+    
+    # Broadcast message to all connected clients
+    message = {
+        'username': username,
+        'text': text,
+        'timestamp': data.get('timestamp', datetime.utcnow().isoformat()),
+        'type': data.get('type', 'chat')
+    }
+    
+    # Store chat message in database (optional)
+    await db.chat_messages.insert_one({
+        **message,
+        'created_at': datetime.utcnow()
+    })
+    
+    # Broadcast to all clients
+    await sio.emit('chat_message', message)
 
 # ============== GAME LOOP ==============
 
@@ -297,6 +323,21 @@ async def game_loop():
                     'game_id': game_engine.current_game_id
                 })
                 await sio.emit('game_state', game_engine.get_state())
+                
+                # Broadcast live bets
+                live_bets = [
+                    {
+                        'wallet': addr[:8] + '...' + addr[-4:],
+                        'amount': bet['amount'],
+                        'auto_cashout': bet.get('auto_cashout'),
+                        'current_multiplier': game_engine.current_multiplier,
+                        'potential_win': bet['amount'] * game_engine.current_multiplier
+                    }
+                    for addr, bet in game_engine.active_bets.items()
+                    if addr not in game_engine.cashed_out
+                ]
+                await sio.emit('live_bets', {'bets': live_bets})
+                
                 await asyncio.sleep(0.05)
 
             game_engine.game_state = "crashed"
@@ -369,16 +410,19 @@ async def get_game_state():
 
 @api_router.get("/game/history")
 async def get_game_history(limit: int = 20):
-    history = await db.game_history.find().sort("created_at", -1).limit(limit).to_list(limit)
-    return [
-        {
-            "game_id": h["game_id"],
-            "crash_point": h["crash_point"],
-            "server_seed_hash": h["server_seed_hash"],
-            "timestamp": h["created_at"]
-        }
-        for h in history
-    ]
+    """Get recent game history"""
+    history = await db.game_history.find({}, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
+    return {
+        "history": [
+            {
+                "id": h.get("game_id", str(h.get("_id", ""))),
+                "multiplier": h["crash_point"],
+                "timestamp": h["created_at"].isoformat() if isinstance(h["created_at"], datetime) else h["created_at"],
+                "crashed": True
+            }
+            for h in history
+        ]
+    }
 
 @api_router.get("/bets/{wallet_address}")
 async def get_user_bets(wallet_address: str, limit: int = 50):
@@ -397,14 +441,96 @@ async def get_user_bets(wallet_address: str, limit: int = 50):
 
 @api_router.get("/leaderboard")
 async def get_leaderboard(limit: int = 10):
-    wallets = await db.wallets.find().sort("balance", -1).limit(limit).to_list(limit)
-    return [
+    """Get top players by total winnings"""
+    pipeline = [
         {
-            "wallet": w["address"][:8] + "..." + w["address"][-4:],
-            "balance": w["balance"]
+            "$match": {"status": "won"}
+        },
+        {
+            "$group": {
+                "_id": "$wallet_address",
+                "total_won": {"$sum": "$winnings"},
+                "total_wagered": {"$sum": "$amount"},
+                "games_played": {"$sum": 1},
+                "biggest_win": {"$max": {"$multiply": ["$amount", "$cashout_multiplier"]}}
+            }
+        },
+        {
+            "$sort": {"total_won": -1}
+        },
+        {
+            "$limit": limit
         }
-        for w in wallets
     ]
+    
+    leaderboard = await db.bets.aggregate(pipeline).to_list(limit)
+    
+    return {
+        "leaderboard": [
+            {
+                "rank": idx + 1,
+                "username": lb["_id"][:8] + "..." + lb["_id"][-4:],
+                "totalWon": round(lb["total_won"], 2),
+                "totalWagered": round(lb["total_wagered"], 2),
+                "winRate": round((lb["total_won"] / lb["total_wagered"] * 100) if lb["total_wagered"] > 0 else 0, 1),
+                "gamesPlayed": lb["games_played"],
+                "biggestWin": round(lb["biggest_win"], 2)
+            }
+            for idx, lb in enumerate(leaderboard)
+        ]
+    }
+
+@api_router.get("/user/stats/{wallet_address}")
+async def get_user_stats(wallet_address: str):
+    """Get user statistics"""
+    pipeline = [
+        {
+            "$match": {"wallet_address": wallet_address}
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total_wagered": {"$sum": "$amount"},
+                "total_won": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$status", "won"]},
+                            "$winnings",
+                            0
+                        ]
+                    }
+                },
+                "games_played": {"$sum": 1},
+                "biggest_win": {
+                    "$max": {
+                        "$cond": [
+                            {"$eq": ["$status", "won"]},
+                            {"$multiply": ["$amount", "$cashout_multiplier"]},
+                            0
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+    
+    result = await db.bets.aggregate(pipeline).to_list(1)
+    
+    if result:
+        stats = result[0]
+        return {
+            "total_wagered": round(stats["total_wagered"], 2),
+            "total_won": round(stats["total_won"], 2),
+            "games_played": stats["games_played"],
+            "biggest_win": round(stats.get("biggest_win", 0), 2)
+        }
+    
+    return {
+        "total_wagered": 0,
+        "total_won": 0,
+        "games_played": 0,
+        "biggest_win": 0
+    }
 
 # --- NEW SECURE XERIS PROXY ROUTES ---
 
