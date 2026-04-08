@@ -564,7 +564,7 @@ const RocketGamePage = () => {
                 <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-white">Rocket Crash</h1>
+                <h1 className="text-lg sm:text-2xl font-bold text-white">Xeris.Pump</h1>
                 <p className="text-[10px] sm:text-xs text-gray-400 hidden sm:block">Bet. Watch. Cash Out!</p>
               </div>
             </div>
@@ -724,7 +724,7 @@ const RocketGamePage = () => {
       <footer className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-lg mt-8 sm:mt-12">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="text-center text-gray-500 text-xs sm:text-sm">
-            <p>© 2025 Rocket Crash. Play responsibly.</p>
+            <p>© 2025 Xeris.Pump. Play responsibly.</p>
             <p className="text-[10px] sm:text-xs mt-1">
               Powered by Xeris Blockchain
             </p>
