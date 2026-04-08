@@ -34,7 +34,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
 
   const handlePlaceBet = () => {
     if (betAmount < 1) {
-      toast.error("Minimum bet is $1");
+      toast.error("Minimum bet is 1 XRS");
       return;
     }
     if (betAmount > balance) {
