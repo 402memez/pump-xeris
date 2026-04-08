@@ -119,7 +119,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Draw particles
+        var particles = []; // Draw particles
         particles.forEach((particle, index) => {
           const opacity = 1 - (index / particles.length) * 0.7;
           ctx.fillStyle = `rgba(52, 211, 153, ${opacity})`;
