@@ -88,7 +88,7 @@ const RocketGamePage = () => {
     }
   }, [walletConnected, pubKey]);
 
-  // Sync balance from blockchain
+  // Sync balance from blockchain via backend proxy
   const syncBalance = useCallback(async () => {
     const currentKey = pubKey || (dapp.publicKey ? dapp.publicKey.toString() : '');
     if (!currentKey) {
@@ -98,32 +98,30 @@ const RocketGamePage = () => {
 
     try {
       setIsRefreshing(true);
-      console.log('🔄 Syncing balance for:', currentKey);
+      console.log('🔄 Syncing balance via backend proxy for:', currentKey);
       
-      // Use SDK's built-in getBalance method
-      const lamports = await dapp.getBalance(currentKey);
-      console.log('✅ Got lamports:', lamports);
-      const xrs = lamports / 1_000_000_000; // Convert lamports to XRS
-      console.log('✅ Converted to XRS:', xrs);
-      setBalance(xrs);
-    } catch (err) {
-      console.error("❌ SDK Balance fetch error:", err);
-      // Fallback to backend proxy if SDK fails
-      try {
-        console.log('🔄 Trying backend proxy...');
-        const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Backend proxy response:', data);
-          if (data.balance !== undefined) {
-            setBalance(data.balance);
-          }
-        } else {
-          console.error('❌ Backend proxy failed:', response.status);
-        }
-      } catch (fallbackErr) {
-        console.error("❌ Fallback balance fetch failed:", fallbackErr);
+      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
+      
+      if (!response.ok) {
+        throw new Error(`Backend Error: HTTP ${response.status}\n(If this says 404, Railway is still building your Python server!)`);
       }
+
+      const data = await response.json();
+      console.log('✅ Backend proxy response:', data);
+      
+      if (data.error) {
+        throw new Error(`Node Error: ${data.error}`);
+      }
+
+      if (data.balance !== undefined) {
+        console.log('✅ Setting balance to:', data.balance);
+        setBalance(data.balance);
+      } else {
+        throw new Error(`Unknown Data Format: ${JSON.stringify(data)}`);
+      }
+    } catch (err) {
+      console.error("❌ Proxy Fetch Error:", err);
+      alert("Balance Fetch Error:\n\n" + err.message);
     } finally {
       setIsRefreshing(false);
     }
