@@ -30,13 +30,11 @@ const getBackendURL = () => {
   // Double-check we have both parts
   if (!host) {
     console.error('Unable to determine backend URL');
-    return 'https://stunning-nurturing-production-5e0e.up.railway.app'; // Emergency fallback
   }
   
   return `${protocol}//${host}`;
 };
 
-const SOCKET_URL = 'https://stunning-nurturing-production-5e0e.up.railway.app';
 
 // Production: Minimal logging
 if (process.env.NODE_ENV === 'development') {
