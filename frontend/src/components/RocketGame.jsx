@@ -11,7 +11,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
 
   useEffect(() => {
     // ULTRA-OPTIMIZED: Only update if multiplier changed significantly
-    if (Math.abs(currentMultiplier - lastMultiplierRef.current) < 0.1 && gameState === "flying") {
+    if (Math.abs(currentMultiplier - lastMultiplierRef.current) < 0.01 && gameState === "flying") {
       return;
     }
     lastMultiplierRef.current = currentMultiplier;
@@ -308,7 +308,7 @@ const MemoizedRocketGame = React.memo(RocketGame, (prevProps, nextProps) => {
   // Only re-render if these props change significantly
   return (
     prevProps.gameState === nextProps.gameState &&
-    Math.abs(prevProps.currentMultiplier - nextProps.currentMultiplier) < 0.1
+    Math.abs(prevProps.currentMultiplier - nextProps.currentMultiplier) < 0.01
   );
 });
 

@@ -177,7 +177,7 @@ const RocketGamePage = () => {
             <div className="flex items-center space-x-2 sm:hidden">
               <div className="bg-gray-800/50 px-3 py-1.5 rounded-lg">
                 <div className="text-xs text-gray-400">Balance</div>
-                <div className="text-sm font-bold text-cyan-400">${balance.toLocaleString()}</div>
+                <div className="text-sm font-bold text-cyan-400">{balance.toLocaleString()}</div>
               </div>
             </div>
           </div>

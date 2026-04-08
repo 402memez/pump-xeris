@@ -71,8 +71,7 @@ const UserStats = ({ stats }) => {
               <DollarSign className="w-5 h-5 text-emerald-400" />
               <span className="text-gray-300 text-sm">Biggest Win</span>
             </div>
-            <span className="text-emerald-400 font-bold text-lg">
-              ${stats.biggestWin.toLocaleString()}
+            <span className="text-emerald-400 font-bold text-lg">{stats.biggestWin.toLocaleString()}
             </span>
           </div>
 
@@ -81,8 +80,7 @@ const UserStats = ({ stats }) => {
               <Target className="w-5 h-5 text-cyan-400" />
               <span className="text-gray-300 text-sm">Total Wagered</span>
             </div>
-            <span className="text-cyan-400 font-bold text-lg">
-              ${stats.totalWagered.toLocaleString()}
+            <span className="text-cyan-400 font-bold text-lg">{stats.totalWagered.toLocaleString()}
             </span>
           </div>
         </div>

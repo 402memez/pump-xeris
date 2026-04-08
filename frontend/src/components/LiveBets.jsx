@@ -56,8 +56,7 @@ const LiveBets = ({ bets, currentMultiplier }) => {
                 <div className="flex items-center justify-between text-sm">
                   <div>
                     <span className="text-gray-400">Bet: </span>
-                    <span className="text-white font-semibold">
-                      ${bet.betAmount}
+                    <span className="text-white font-semibold">{bet.betAmount}
                     </span>
                   </div>
                   <div>
@@ -72,8 +71,7 @@ const LiveBets = ({ bets, currentMultiplier }) => {
                   <div className="mt-2 pt-2 border-t border-gray-700">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-gray-500">Potential Win</span>
-                      <span className="text-emerald-400 font-bold">
-                        ${bet.potentialWin}
+                      <span className="text-emerald-400 font-bold">{bet.potentialWin}
                       </span>
                     </div>
                   </div>

@@ -108,8 +108,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
                 onClick={() => setBetAmount(amount)}
                 disabled={gameState === "flying" && activeBet}
                 className="flex-1 border-gray-700 hover:bg-gray-800 hover:border-cyan-500 transition-colors text-xs"
-              >
-                ${amount}
+              >{amount}
               </Button>
             ))}
           </div>
@@ -170,8 +169,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
         {activeBet && gameState === "flying" && (
           <div className="bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 p-4 rounded-lg border border-emerald-700/50">
             <div className="text-sm text-gray-400 mb-1">Potential Win</div>
-            <div className="text-2xl font-bold text-emerald-400">
-              ${(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)}
+            <div className="text-2xl font-bold text-emerald-400">{(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
               Bet: ${activeBet.betAmount} × {activeBet.currentMultiplier.toFixed(2)}x

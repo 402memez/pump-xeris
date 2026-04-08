@@ -71,8 +71,7 @@ const Leaderboard = ({ leaders }) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-emerald-400">
-                      ${leader.totalWins.toLocaleString()}
+                    <div className="text-lg font-bold text-emerald-400">{leader.totalWins.toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500">Total Wins</div>
                   </div>
@@ -87,8 +86,7 @@ const Leaderboard = ({ leaders }) => {
                   </div>
                   <div className="text-xs text-right">
                     <span className="text-gray-500">Biggest: </span>
-                    <span className="text-orange-400 font-semibold">
-                      ${leader.biggestWin.toLocaleString()}
+                    <span className="text-orange-400 font-semibold">{leader.biggestWin.toLocaleString()}
                     </span>
                   </div>
                 </div>
