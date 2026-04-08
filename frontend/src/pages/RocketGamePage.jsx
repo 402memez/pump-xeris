@@ -709,7 +709,7 @@ const RocketGamePage = () => {
             gameState={gameState}
             onPlaceBet={handlePlaceBet}
             onCashOut={handleCashOut}
-            activeBet={activeBet} currentMultiplier={currentMultiplier}
+            activeBet={activeBet} currentMultiplier={currentMultiplier} currentMultiplier={currentMultiplier}
           />
 
           {/* Tabs for Mobile */}
@@ -770,7 +770,7 @@ const RocketGamePage = () => {
               gameState={gameState}
               onPlaceBet={handlePlaceBet}
               onCashOut={handleCashOut}
-              activeBet={activeBet} currentMultiplier={currentMultiplier}
+              activeBet={activeBet} currentMultiplier={currentMultiplier} currentMultiplier={currentMultiplier}
             />
           </div>
 
