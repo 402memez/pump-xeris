@@ -37,6 +37,17 @@ const RocketGamePage = () => {
   const [autoEject, setAutoEject] = useState(2.0);
   const socketRef = useRef(null);
 
+  // Welcome screen state
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [welcomeAnimating, setWelcomeAnimating] = useState(false);
+
+  const handleEnterGame = () => {
+    setWelcomeAnimating(true);
+    setTimeout(() => {
+      setShowWelcome(false);
+    }, 500);
+  };
+
   // Memoize user stats to prevent recalculation
   const userStats = useMemo(() => ({
     balance: balance,
@@ -421,6 +432,54 @@ const RocketGamePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+      {/* Welcome Screen */}
+      {showWelcome && (
+        <div 
+          className={`fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 transition-opacity duration-500 ${
+            welcomeAnimating ? 'opacity-0' : 'opacity-100'
+          }`}
+        >
+          <div className="text-center px-6 max-w-2xl mx-auto">
+            {/* Animated Rocket Icon */}
+            <div className="mb-8 animate-bounce">
+              <div className="bg-gradient-to-br from-orange-500 to-rose-600 p-6 rounded-full inline-block shadow-2xl shadow-orange-500/50">
+                <Rocket className="w-16 h-16 sm:w-20 sm:h-20 text-white transform rotate-45" />
+              </div>
+            </div>
+
+            {/* Welcome Text */}
+            <h1 className="text-5xl sm:text-7xl font-black mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-pulse">
+              WELCOME
+            </h1>
+            <h2 className="text-3xl sm:text-5xl font-bold text-white mb-8">
+              XERIANS
+            </h2>
+
+            {/* Tagline */}
+            <p className="text-gray-400 text-lg sm:text-xl mb-12 italic">
+              Where legends are made and fortunes are won
+            </p>
+
+            {/* Enter Button */}
+            <button
+              onClick={handleEnterGame}
+              className="group relative overflow-hidden bg-gradient-to-r from-orange-600 via-rose-600 to-purple-700 hover:from-orange-500 hover:via-rose-500 hover:to-purple-600 text-white font-black text-xl sm:text-2xl px-12 py-6 rounded-2xl shadow-2xl shadow-purple-500/50 transform hover:scale-105 transition-all duration-300"
+            >
+              <span className="relative z-10">NO CRYING IN THE CASINO</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </button>
+
+            {/* Disclaimer */}
+            <p className="mt-8 text-xs text-gray-500">
+              Play responsibly. Xeris.Pump is a game of chance.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main Game (shown after welcome) */}
+      {!showWelcome && (
+        <>
       {/* Wallet Settings Menu */}
       {showWalletMenu && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
@@ -731,6 +790,8 @@ const RocketGamePage = () => {
           </div>
         </div>
       </footer>
+      </>
+      )}
     </div>
   );
 };
