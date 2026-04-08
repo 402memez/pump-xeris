@@ -183,4 +183,5 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
   );
 };
 
-export default BettingPanel;
+// OPTIMIZED: Memoize to prevent unnecessary re-renders
+export default React.memo(BettingPanel);

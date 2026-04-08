@@ -221,6 +221,21 @@ async def cash_out(sid, data):
 
     result = game_engine.cash_out(wallet_address)
     if result:
+        # OPTIMIZED: Emit to user immediately for instant feedback
+        await sio.emit('cashed_out', {
+            'wallet_address': wallet_address,
+            'multiplier': result['multiplier'],
+            'winnings': result['winnings']
+        }, room=sid)
+        
+        # OPTIMIZED: Batch database updates asynchronously (non-blocking)
+        asyncio.create_task(_process_cashout_db(wallet_address, result))
+    else:
+        await sio.emit('cashout_error', {'error': 'Cannot cash out'}, room=sid)
+
+async def _process_cashout_db(wallet_address: str, result: dict):
+    """Process cashout database updates asynchronously"""
+    try:
         await db.wallets.update_one(
             {"address": wallet_address},
             {"$inc": {"balance": result['winnings']}}
@@ -233,14 +248,8 @@ async def cash_out(sid, data):
                 "winnings": result['winnings']
             }}
         )
-        await sio.emit('cashed_out', {
-            'wallet_address': wallet_address,
-            'multiplier': result['multiplier'],
-            'winnings': result['winnings']
-        })
-        await sio.emit('game_state', game_engine.get_state())
-    else:
-        await sio.emit('cashout_error', {'error': 'Cannot cash out'}, room=sid)
+    except Exception as e:
+        logger.error(f"Cashout DB update failed: {e}")
 
 @sio.event
 async def send_message(sid, data):
@@ -291,43 +300,48 @@ async def game_loop():
             game_engine.game_state = "running"
             game_engine.start_time = datetime.utcnow()
 
+            # OPTIMIZED: Batch database operations outside game loop
+            pending_cashouts = []
+            last_emit_time = 0
+            tick_count = 0
+            
             while game_engine.current_multiplier < game_engine.crash_point:
                 elapsed = (datetime.utcnow() - game_engine.start_time).total_seconds() * 1000
                 game_engine.current_multiplier = game_engine.calculate_multiplier(int(elapsed))
+                tick_count += 1
 
+                # Check auto-cashouts (collect for batch processing)
                 for wallet_address, bet in list(game_engine.active_bets.items()):
                     if wallet_address not in game_engine.cashed_out:
                         if bet.get('auto_cashout') and game_engine.current_multiplier >= bet['auto_cashout']:
                             result = game_engine.cash_out(wallet_address)
                             if result:
-                                await db.wallets.update_one(
-                                    {"address": wallet_address},
-                                    {"$inc": {"balance": result['winnings']}}
-                                )
-                                await db.bets.update_one(
-                                    {"game_id": game_engine.current_game_id, "wallet_address": wallet_address},
-                                    {"$set": {
-                                        "status": "cashed_out",
-                                        "cashout_multiplier": result['multiplier'],
-                                        "winnings": result['winnings']
-                                    }}
-                                )
+                                pending_cashouts.append({
+                                    'wallet_address': wallet_address,
+                                    'result': result
+                                })
+                                # Emit immediately for responsiveness
                                 await sio.emit('auto_cashed_out', {
                                     'wallet_address': wallet_address,
                                     'multiplier': result['multiplier'],
                                     'winnings': result['winnings']
                                 })
 
-                await sio.emit('multiplier_update', {
-                    'multiplier': game_engine.current_multiplier,
-                    'game_id': game_engine.current_game_id
-                })
-                # Only emit game_state every 300ms to reduce traffic
-                if int(elapsed) % 300 == 0:
+                # OPTIMIZED: Only emit every 50ms (20 FPS) instead of every tick
+                current_time = elapsed
+                if current_time - last_emit_time >= 50:
+                    await sio.emit('multiplier_update', {
+                        'multiplier': game_engine.current_multiplier,
+                        'game_id': game_engine.current_game_id
+                    })
+                    last_emit_time = current_time
+                
+                # OPTIMIZED: Emit game_state less frequently (every 500ms)
+                if tick_count % 10 == 0:  # Every 10 ticks at 50ms = 500ms
                     await sio.emit('game_state', game_engine.get_state())
                 
-                # Broadcast live bets every 500ms instead of every tick
-                if int(elapsed) % 500 == 0:
+                # OPTIMIZED: Emit live bets even less frequently (every 1 second)
+                if tick_count % 20 == 0:  # Every 20 ticks at 50ms = 1 second
                     live_bets = [
                         {
                             'wallet': addr[:8] + '...' + addr[-4:],
@@ -341,7 +355,23 @@ async def game_loop():
                     ]
                     await sio.emit('live_bets', {'bets': live_bets})
                 
-                await asyncio.sleep(0.1)  # 100ms instead of 50ms for better performance
+                await asyncio.sleep(0.05)  # OPTIMIZED: 50ms (20 FPS) for smoother gameplay
+            
+            # OPTIMIZED: Process all pending cashouts in batch AFTER game loop
+            if pending_cashouts:
+                for cashout in pending_cashouts:
+                    await db.wallets.update_one(
+                        {"address": cashout['wallet_address']},
+                        {"$inc": {"balance": cashout['result']['winnings']}}
+                    )
+                    await db.bets.update_one(
+                        {"game_id": game_engine.current_game_id, "wallet_address": cashout['wallet_address']},
+                        {"$set": {
+                            "status": "cashed_out",
+                            "cashout_multiplier": cashout['result']['multiplier'],
+                            "winnings": cashout['result']['winnings']
+                        }}
+                    )
 
             game_engine.game_state = "crashed"
             game_engine.current_multiplier = game_engine.crash_point

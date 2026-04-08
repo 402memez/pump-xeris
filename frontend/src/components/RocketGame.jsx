@@ -9,8 +9,15 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
   const [particles, setParticles] = useState([]);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
+  const lastMultiplierRef = useRef(1.0);
 
   useEffect(() => {
+    // OPTIMIZED: Only update if multiplier changed significantly (reduce re-renders)
+    if (Math.abs(currentMultiplier - lastMultiplierRef.current) < 0.05 && gameState === "flying") {
+      return;
+    }
+    lastMultiplierRef.current = currentMultiplier;
+    
     if (gameState === "flying") {
       const progress = Math.min(currentMultiplier / 15, 1);
       
@@ -42,8 +49,8 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
       setRocketPosition({ x, y });
       setRocketRotation(rotation);
 
-      // Generate trail particles
-      if (Math.random() < 0.4) {
+      // OPTIMIZED: Generate trail particles less frequently
+      if (Math.random() < 0.2) { // Reduced from 0.4
         const newParticle = {
           id: Date.now() + Math.random(),
           x,
@@ -51,11 +58,11 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
           opacity: 1,
           size: Math.random() * 4 + 2,
         };
-        setParticles(prev => [...prev.slice(-30), newParticle]);
+        setParticles(prev => [...prev.slice(-20), newParticle]); // Reduced from 30
       }
 
-      // Cash out demo
-      if (Math.random() < 0.03 && cashedOutPlayers.length < 2) {
+      // Cash out demo - reduced frequency
+      if (Math.random() < 0.02 && cashedOutPlayers.length < 2) { // Reduced from 0.03
         const newPlayer = {
           id: Date.now(),
           x: x + (Math.random() - 0.5) * 15,
@@ -76,7 +83,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
       setParticles([]);
       setCashedOutPlayers([]);
     }
-  }, [currentMultiplier, gameState, cashedOutPlayers.length]);
+  }, [currentMultiplier, gameState]);
 
   // Canvas animation
   useEffect(() => {
@@ -360,4 +367,13 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
   );
 };
 
-export default RocketGame;
+// OPTIMIZED: Memoize component to prevent unnecessary re-renders
+const MemoizedRocketGame = React.memo(RocketGame, (prevProps, nextProps) => {
+  // Only re-render if these props change significantly
+  return (
+    prevProps.gameState === nextProps.gameState &&
+    Math.abs(prevProps.currentMultiplier - nextProps.currentMultiplier) < 0.1
+  );
+});
+
+export default MemoizedRocketGame;

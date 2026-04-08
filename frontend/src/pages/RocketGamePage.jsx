@@ -250,11 +250,15 @@ const RocketGamePage = () => {
 
   // Socket.io connection
   useEffect(() => {
+    // Socket.io connection with optimized settings
     const socket = io(SOCKET_URL, { 
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
+      // OPTIMIZED: Reduce ping/pong overhead
+      pingTimeout: 60000,
+      pingInterval: 25000
     });
     socketRef.current = socket;
     
@@ -262,17 +266,36 @@ const RocketGamePage = () => {
       console.log('Connected to game server');
     });
 
-    // Throttle multiplier updates to reduce re-renders
-    let lastUpdate = Date.now();
-    socket.on('multiplier_update', (data) => {
-      const now = Date.now();
-      if (now - lastUpdate < 100) return; // Skip updates faster than 100ms
-      lastUpdate = now;
+    // OPTIMIZED: Use requestAnimationFrame for smooth multiplier updates
+    let rafId = null;
+    let targetMultiplier = 1.0;
+    
+    const animateMultiplier = () => {
+      const current = multiplierRef.current;
+      const target = targetMultiplier;
       
+      // Smooth interpolation for buttery smooth animation
+      if (Math.abs(target - current) > 0.01) {
+        const newValue = current + (target - current) * 0.3;
+        multiplierRef.current = newValue;
+        setCurrentMultiplier(newValue);
+      } else {
+        multiplierRef.current = target;
+        setCurrentMultiplier(target);
+      }
+      
+      rafId = requestAnimationFrame(animateMultiplier);
+    };
+    
+    socket.on('multiplier_update', (data) => {
       const val = typeof data === 'object' ? data.multiplier : data;
-      multiplierRef.current = val;
-      setCurrentMultiplier(val);
+      targetMultiplier = val;
       setGameState('flying');
+      
+      // Start animation loop if not running
+      if (!rafId) {
+        rafId = requestAnimationFrame(animateMultiplier);
+      }
       
       // Update active bet
       if (activeBet) {
@@ -344,6 +367,11 @@ const RocketGamePage = () => {
 
     socket.on('disconnect', () => {
       console.log('Disconnected from game server');
+      // OPTIMIZED: Cancel animation frame on disconnect
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
     });
 
     // Fetch initial data
@@ -351,6 +379,7 @@ const RocketGamePage = () => {
     fetchLeaderboard();
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       if (socket) socket.disconnect();
     };
   }, [activeBet, handleCashOut, fetchGameHistory, fetchLeaderboard]);

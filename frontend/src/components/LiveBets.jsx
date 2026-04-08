@@ -87,4 +87,7 @@ const LiveBets = ({ bets, currentMultiplier }) => {
   );
 };
 
-export default LiveBets;
+// OPTIMIZED: Memoize to prevent unnecessary re-renders on multiplier changes
+export default React.memo(LiveBets, (prevProps, nextProps) => {
+  return prevProps.bets === nextProps.bets;
+});
