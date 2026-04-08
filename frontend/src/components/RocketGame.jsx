@@ -93,7 +93,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 4;
         ctx.lineCap = "round";
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 0; // GPU Hack
         ctx.shadowColor = "rgba(52, 211, 153, 0.5)";
 
         ctx.beginPath();
@@ -171,7 +171,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
           style={{
             left: `${rocketPosition.x}%`,
             top: `${rocketPosition.y}%`,
-            transform: `translate(-50%, -50%) rotate(${rocketRotation}deg)`,
+            transform: `translate(-50%, -50%) rotate(${rocketRotation}deg) translateZ(0)`, willChange: "transform, left, top",
           }}
         >
           {gameState === "flying" && (
@@ -189,7 +189,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
               {/* Futuristic rocket shape */}
               <div className="relative">
                 <svg className="w-12 h-12 sm:w-16 sm:h-16" viewBox="0 0 50 50" style={{
-                  filter: "drop-shadow(0 0 20px rgba(52, 211, 153, 1)) drop-shadow(0 0 40px rgba(6, 182, 212, 0.6))",
+                  
                 }}>
                   <defs>
                     <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
