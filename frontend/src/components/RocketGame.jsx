@@ -6,6 +6,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
   const [rocketPosition, setRocketPosition] = useState({ x: 5, y: 95 });
   const [rocketRotation, setRocketRotation] = useState(0);
   const canvasRef = useRef(null);
+  const animationRef = useRef(null);
   const lastMultiplierRef = useRef(1.0);
 
   useEffect(() => {
