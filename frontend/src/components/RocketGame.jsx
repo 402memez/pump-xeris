@@ -144,7 +144,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, rocketPosition, currentMultiplier, particles]);
+  }, [gameState, rocketPosition, currentMultiplier]);
 
   const getMultiplierColor = () => {
     if (currentMultiplier < 2) return "from-emerald-400 to-teal-400";
