@@ -42,7 +42,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
       return;
     }
     onPlaceBet(betAmount, autoCashout ? autoCashoutValue : null);
-    toast.success(`Bet placed: $${betAmount}`);
+    toast.success(`Bet placed: ${betAmount} XRS`);
   };
 
   const handleCashOut = () => {
@@ -59,8 +59,8 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
         <div className="bg-gradient-to-r from-gray-800 to-gray-850 p-4 rounded-lg border border-gray-700">
           <div className="text-sm text-gray-400 mb-1">Your Balance</div>
           <div className="text-3xl font-bold text-cyan-400 flex items-center">
-            <DollarSign className="w-7 h-7" />
-            {balance.toLocaleString()}
+            
+            {balance.toLocaleString()} <span className="text-xl text-cyan-300 ml-2">XRS</span>
           </div>
         </div>
 
@@ -78,13 +78,13 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
               <Minus className="w-4 h-4" />
             </Button>
             <div className="relative flex-1">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm font-bold text-gray-500">XRS</span>
               <Input
                 type="number"
                 value={betAmount}
                 onChange={(e) => handleBetAmountChange(e.target.value)}
                 disabled={gameState === "flying" && activeBet}
-                className="pl-10 bg-gray-800 border-gray-700 text-white text-center text-lg font-semibold focus:border-cyan-500 transition-colors"
+                className="px-12 bg-gray-800 border-gray-700 text-white text-center text-lg font-semibold focus:border-cyan-500 transition-colors"
               />
             </div>
             <Button
@@ -155,7 +155,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
               onClick={handleCashOut}
               className="w-full h-14 bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-500 hover:to-rose-500 text-white font-bold text-lg shadow-lg hover:shadow-orange-500/50 transition-all duration-300 animate-pulse"
             >
-              CASH OUT ${(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)}
+              CASH OUT {(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)} XRS
             </Button>
           )}
           {activeBet && gameState === "waiting" && (
@@ -172,7 +172,7 @@ const BettingPanel = ({ balance, gameState, onPlaceBet, onCashOut, activeBet }) 
             <div className="text-2xl font-bold text-emerald-400">{(activeBet.betAmount * activeBet.currentMultiplier).toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Bet: ${activeBet.betAmount} × {activeBet.currentMultiplier.toFixed(2)}x
+              Bet: {activeBet.betAmount} XRS × {activeBet.currentMultiplier.toFixed(2)}x
             </div>
           </div>
         )}
