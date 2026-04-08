@@ -91,28 +91,38 @@ const RocketGamePage = () => {
   // Sync balance from blockchain
   const syncBalance = useCallback(async () => {
     const currentKey = pubKey || (dapp.publicKey ? dapp.publicKey.toString() : '');
-    if (!currentKey) return;
+    if (!currentKey) {
+      console.log('❌ No wallet key available for balance sync');
+      return;
+    }
 
     try {
       setIsRefreshing(true);
+      console.log('🔄 Syncing balance for:', currentKey);
       
       // Use SDK's built-in getBalance method
       const lamports = await dapp.getBalance(currentKey);
+      console.log('✅ Got lamports:', lamports);
       const xrs = lamports / 1_000_000_000; // Convert lamports to XRS
+      console.log('✅ Converted to XRS:', xrs);
       setBalance(xrs);
     } catch (err) {
-      console.error("Balance fetch error:", err);
+      console.error("❌ SDK Balance fetch error:", err);
       // Fallback to backend proxy if SDK fails
       try {
+        console.log('🔄 Trying backend proxy...');
         const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${currentKey}`);
         if (response.ok) {
           const data = await response.json();
+          console.log('✅ Backend proxy response:', data);
           if (data.balance !== undefined) {
             setBalance(data.balance);
           }
+        } else {
+          console.error('❌ Backend proxy failed:', response.status);
         }
       } catch (fallbackErr) {
-        console.error("Fallback balance fetch failed:", fallbackErr);
+        console.error("❌ Fallback balance fetch failed:", fallbackErr);
       }
     } finally {
       setIsRefreshing(false);
@@ -122,32 +132,44 @@ const RocketGamePage = () => {
   // Connect to Xeris wallet
   const connectWallet = useCallback(async () => {
     try {
+      console.log('🔌 Attempting to connect wallet...');
       const provider = await XerisDApp.waitForProvider(3000);
       if (!provider) {
-        console.log("No Xeris wallet found - install Xeris wallet extension");
+        console.log("❌ No Xeris wallet found - install Xeris wallet extension");
         alert("Please install the Xeris wallet extension to connect");
         return;
       }
       
+      console.log('✅ Xeris provider found');
       await dapp.connect();
-      setWalletConnected(true);
-      setPubKey(dapp.publicKey?.toString() || '');
+      console.log('✅ Wallet connected');
       
-      // Initial balance sync
-      setTimeout(() => syncBalance(), 500);
+      const walletKey = dapp.publicKey?.toString() || '';
+      setWalletConnected(true);
+      setPubKey(walletKey);
+      console.log('✅ Wallet address:', walletKey);
+      
+      // Initial balance sync with delay
+      console.log('⏳ Waiting 1 second before syncing balance...');
+      setTimeout(() => {
+        console.log('🔄 Starting balance sync...');
+        syncBalance();
+      }, 1000);
       
       dapp.on("accountChanged", async (newKey) => {
+        console.log('🔄 Account changed to:', newKey?.toString());
         setPubKey(newKey?.toString() || '');
-        setTimeout(() => syncBalance(), 200);
+        setTimeout(() => syncBalance(), 500);
       });
 
       dapp.on("disconnect", () => {
+        console.log('❌ Wallet disconnected');
         setWalletConnected(false);
         setPubKey('');
         setBalance(0);
       });
     } catch (err) {
-      console.error("Wallet connection failed:", err);
+      console.error("❌ Wallet connection failed:", err);
       alert("Failed to connect wallet: " + err.message);
     }
   }, [syncBalance]);
