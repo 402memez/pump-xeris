@@ -300,15 +300,13 @@ async def game_loop():
             game_engine.game_state = "running"
             game_engine.start_time = datetime.utcnow()
 
-            # OPTIMIZED: Batch database operations outside game loop
+            # ULTRA-OPTIMIZED: 30 FPS game loop (33ms ticks) - Maximum smoothness
             pending_cashouts = []
-            last_emit_time = 0
-            tick_count = 0
+            last_multiplier_emit = 0
             
             while game_engine.current_multiplier < game_engine.crash_point:
                 elapsed = (datetime.utcnow() - game_engine.start_time).total_seconds() * 1000
                 game_engine.current_multiplier = game_engine.calculate_multiplier(int(elapsed))
-                tick_count += 1
 
                 # Check auto-cashouts (collect for batch processing)
                 for wallet_address, bet in list(game_engine.active_bets.items()):
@@ -327,37 +325,19 @@ async def game_loop():
                                     'winnings': result['winnings']
                                 })
 
-                # OPTIMIZED: Only emit every 50ms (20 FPS) instead of every tick
+                # ULTRA-OPTIMIZED: Only emit multiplier updates (30 FPS)
+                # Remove all other emissions during game loop
                 current_time = elapsed
-                if current_time - last_emit_time >= 50:
+                if current_time - last_multiplier_emit >= 33:
                     await sio.emit('multiplier_update', {
                         'multiplier': game_engine.current_multiplier,
                         'game_id': game_engine.current_game_id
                     })
-                    last_emit_time = current_time
+                    last_multiplier_emit = current_time
                 
-                # OPTIMIZED: Emit game_state less frequently (every 500ms)
-                if tick_count % 10 == 0:  # Every 10 ticks at 50ms = 500ms
-                    await sio.emit('game_state', game_engine.get_state())
-                
-                # OPTIMIZED: Emit live bets even less frequently (every 1 second)
-                if tick_count % 20 == 0:  # Every 20 ticks at 50ms = 1 second
-                    live_bets = [
-                        {
-                            'wallet': addr[:8] + '...' + addr[-4:],
-                            'amount': bet['amount'],
-                            'auto_cashout': bet.get('auto_cashout'),
-                            'current_multiplier': game_engine.current_multiplier,
-                            'potential_win': bet['amount'] * game_engine.current_multiplier
-                        }
-                        for addr, bet in game_engine.active_bets.items()
-                        if addr not in game_engine.cashed_out
-                    ]
-                    await sio.emit('live_bets', {'bets': live_bets})
-                
-                await asyncio.sleep(0.05)  # OPTIMIZED: 50ms (20 FPS) for smoother gameplay
+                await asyncio.sleep(0.033)  # 33ms = 30 FPS (ultra smooth)
             
-            # OPTIMIZED: Process all pending cashouts in batch AFTER game loop
+            # Process all pending cashouts in batch AFTER game loop
             if pending_cashouts:
                 for cashout in pending_cashouts:
                     await db.wallets.update_one(

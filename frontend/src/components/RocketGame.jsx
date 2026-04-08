@@ -1,89 +1,47 @@
 import React, { useState, useEffect, useRef } from "react";
-import { TrendingUp, Zap } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { Card } from "./ui/card";
 
 const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
   const [rocketPosition, setRocketPosition] = useState({ x: 5, y: 95 });
   const [rocketRotation, setRocketRotation] = useState(0);
-  const [cashedOutPlayers, setCashedOutPlayers] = useState([]);
-  const [particles, setParticles] = useState([]);
   const canvasRef = useRef(null);
-  const animationRef = useRef(null);
   const lastMultiplierRef = useRef(1.0);
 
   useEffect(() => {
-    // OPTIMIZED: Only update if multiplier changed significantly (reduce re-renders)
-    if (Math.abs(currentMultiplier - lastMultiplierRef.current) < 0.05 && gameState === "flying") {
+    // ULTRA-OPTIMIZED: Only update if multiplier changed significantly
+    if (Math.abs(currentMultiplier - lastMultiplierRef.current) < 0.1 && gameState === "flying") {
       return;
     }
     lastMultiplierRef.current = currentMultiplier;
     
     if (gameState === "flying") {
       const progress = Math.min(currentMultiplier / 15, 1);
-      
-      // Start bottom-left, move right then curve up
       const x = 5 + progress * 90;
       
-      // Trajectory: horizontal at start, then curves up at midpoint
       let y;
       if (progress < 0.5) {
-        // First half: mostly horizontal with slight rise
         y = 95 - progress * 10;
       } else {
-        // Second half: dramatic upward curve
         const adjustedProgress = (progress - 0.5) * 2;
         y = 90 - Math.pow(adjustedProgress, 0.6) * 85;
       }
       
-      // Calculate rotation based on trajectory
       let rotation;
       if (progress < 0.5) {
-        // First half: slight upward angle (0° to -15°)
         rotation = -(progress * 30);
       } else {
-        // Second half: increasingly steep angle (-15° to -75°)
         const adjustedProgress = (progress - 0.5) * 2;
         rotation = -15 - (adjustedProgress * 60);
       }
       
       setRocketPosition({ x, y });
       setRocketRotation(rotation);
-
-      // OPTIMIZED: Generate trail particles less frequently
-      if (Math.random() < 0.2) { // Reduced from 0.4
-        const newParticle = {
-          id: Date.now() + Math.random(),
-          x,
-          y,
-          opacity: 1,
-          size: Math.random() * 4 + 2,
-        };
-        setParticles(prev => [...prev.slice(-20), newParticle]); // Reduced from 30
-      }
-
-      // Cash out demo - reduced frequency
-      if (Math.random() < 0.02 && cashedOutPlayers.length < 2) { // Reduced from 0.03
-        const newPlayer = {
-          id: Date.now(),
-          x: x + (Math.random() - 0.5) * 15,
-          y: y + 5,
-          multiplier: currentMultiplier.toFixed(2),
-        };
-        setCashedOutPlayers(prev => [...prev, newPlayer]);
-        setTimeout(() => {
-          setCashedOutPlayers(prev => prev.filter(p => p.id !== newPlayer.id));
-        }, 2500);
-      }
     } else if (gameState === "waiting") {
       setRocketPosition({ x: 5, y: 95 });
       setRocketRotation(0);
-      setParticles([]);
-      setCashedOutPlayers([]);
-    } else if (gameState === "crashed") {
-      setParticles([]);
-      setCashedOutPlayers([]);
     }
-  }, [currentMultiplier, gameState, cashedOutPlayers.length]);
+  }, [currentMultiplier, gameState]);
 
   // Canvas animation
   useEffect(() => {

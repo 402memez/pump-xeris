@@ -11,29 +11,18 @@ import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
 import Chat from "../components/Chat";
 
-// Auto-detect backend URL with proper protocol handling
-// Ensure we always have a valid URL with protocol
+// ULTRA-OPTIMIZED: Auto-detect backend URL with proper protocol
 const getBackendURL = () => {
-  // If env variable is set, use it
   if (process.env.REACT_APP_BACKEND_URL) {
     return process.env.REACT_APP_BACKEND_URL;
   }
-  
-  // Fallback: construct URL from window.location
-  const protocol = window.location.protocol; // 'https:' or 'http:'
-  const host = window.location.host; // 'domain.com:port'
+  const protocol = window.location.protocol;
+  const host = window.location.host;
   return `${protocol}//${host}`;
 };
 
 const SOCKET_URL = getBackendURL();
 const dapp = new XerisDApp();
-
-// DEBUG: Log configuration
-console.log('🔧 Backend URL:', SOCKET_URL);
-console.log('🔧 Window origin:', window.location.origin);
-console.log('🔧 Window protocol:', window.location.protocol);
-console.log('🔧 Window host:', window.location.host);
-console.log('🔧 REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
 
 const RocketGamePage = () => {
   const [gameState, setGameState] = useState("waiting"); // waiting, flying, crashed
@@ -120,58 +109,27 @@ const RocketGamePage = () => {
     }
   }, [walletConnected, pubKey]);
 
-  // Sync balance via backend proxy (solves HTTPS → HTTP mixed content issue)
+  // ULTRA-OPTIMIZED: Sync balance with minimal logging
   const syncBalance = useCallback(async () => {
-    if (!walletConnected || !pubKey) {
-      console.log('❌ Wallet not connected');
-      return;
-    }
+    if (!walletConnected || !pubKey) return;
 
     try {
       setIsRefreshing(true);
-      const apiUrl = `${SOCKET_URL}/api/xeris/balance/${pubKey}`;
-      console.log('🔄 Fetching balance from:', apiUrl);
-      console.log('🔄 Wallet address:', pubKey);
-      
-      // Frontend (HTTPS) → Backend (HTTPS) → Xeris Node (HTTP)
-      // This avoids browser Mixed Content blocking
-      const response = await fetch(apiUrl);
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers.get('content-type'));
+      const response = await fetch(`${SOCKET_URL}/api/xeris/balance/${pubKey}`);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Backend returned error:', errorText);
-        throw new Error(`Backend Error: HTTP ${response.status}\n\nResponse: ${errorText.substring(0, 200)}`);
+        throw new Error(`Backend Error: HTTP ${response.status}`);
       }
 
-      // Get raw response text first to debug
       const rawText = await response.text();
-      console.log('📄 Raw response:', rawText.substring(0, 200));
+      const data = JSON.parse(rawText);
       
-      // Try to parse as JSON
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch (parseErr) {
-        console.error('❌ JSON parse error:', parseErr);
-        throw new Error(`Invalid JSON Response:\n\n${rawText.substring(0, 300)}\n\nAPI URL was: ${apiUrl}`);
-      }
-      
-      console.log('✅ Backend proxy response:', data);
-      
-      if (data.error) {
-        throw new Error(`Xeris Node Error: ${data.error}`);
-      }
-
       if (data.balance !== undefined) {
-        console.log('✅ Setting balance to:', data.balance, 'XRS');
         setBalance(data.balance);
-      } else {
-        throw new Error(`Invalid response format: ${JSON.stringify(data)}`);
       }
     } catch (err) {
-      console.error("❌ Balance fetch error:", err);
+      console.error("Balance fetch error:", err.message);
       alert("Balance Fetch Error:\n\n" + err.message);
     } finally {
       setIsRefreshing(false);
@@ -289,33 +247,29 @@ const RocketGamePage = () => {
 
   // Socket.io connection
   useEffect(() => {
-    // Socket.io connection with optimized settings
+    // ULTRA-OPTIMIZED: Socket.io connection with minimal overhead
     const socket = io(SOCKET_URL, { 
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],  // WebSocket only (faster)
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-      // OPTIMIZED: Reduce ping/pong overhead
+      reconnectionAttempts: 3,
       pingTimeout: 60000,
       pingInterval: 25000
     });
     socketRef.current = socket;
-    
-    socket.on('connect', () => {
-      console.log('Connected to game server');
-    });
 
-    // OPTIMIZED: Use requestAnimationFrame for smooth multiplier updates
+    // ULTRA-OPTIMIZED: Use refs for animation (no re-renders)
     let rafId = null;
     let targetMultiplier = 1.0;
+    const multiplierDisplayRef = useRef(null);
     
     const animateMultiplier = () => {
       const current = multiplierRef.current;
       const target = targetMultiplier;
       
-      // Smooth interpolation for buttery smooth animation
+      // Smooth interpolation
       if (Math.abs(target - current) > 0.01) {
-        const newValue = current + (target - current) * 0.3;
+        const newValue = current + (target - current) * 0.4; // Faster interpolation
         multiplierRef.current = newValue;
         setCurrentMultiplier(newValue);
       } else {
@@ -336,17 +290,9 @@ const RocketGamePage = () => {
         rafId = requestAnimationFrame(animateMultiplier);
       }
       
-      // Update active bet
-      if (activeBet) {
-        setActiveBet(prev => ({
-          ...prev,
-          currentMultiplier: val,
-        }));
-
-        // Auto cashout check
-        if (activeBet.autoCashout && val >= activeBet.autoCashout) {
-          handleCashOut(val);
-        }
+      // Auto cashout check (lightweight)
+      if (activeBet?.autoCashout && val >= activeBet.autoCashout) {
+        handleCashOut(val);
       }
     });
 
