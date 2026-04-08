@@ -123,7 +123,8 @@ class CrashGameEngine:
 
     def calculate_multiplier(self, elapsed_ms: int) -> float:
         import math
-        multiplier = math.exp(0.00006 * elapsed_ms)
+        # Standard Casino Curve (0.00008) - Snappier takeoff, higher tension
+        multiplier = math.exp(0.00008 * elapsed_ms)
         return round(multiplier, 2)
 
     def place_bet(self, wallet_address: str, amount: float, auto_cashout: Optional[float] = None) -> bool:
