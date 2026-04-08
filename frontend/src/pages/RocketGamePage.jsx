@@ -10,10 +10,6 @@ import GameHistory from "../components/GameHistory";
 import Leaderboard from "../components/Leaderboard";
 import UserStats from "../components/UserStats";
 import Chat from "../components/Chat";
-import {
-  mockLeaderboard,
-  mockChatMessages,
-} from "../mock/gameData";
 
 const SOCKET_URL = process.env.REACT_APP_BACKEND_URL;
 const dapp = new XerisDApp();
@@ -26,9 +22,12 @@ const RocketGamePage = () => {
   const [activeBet, setActiveBet] = useState(null);
   const [liveBets, setLiveBets] = useState([]);
   const [gameHistory, setGameHistory] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [countdown, setCountdown] = useState(5);
-  const [chatMessages, setChatMessages] = useState(mockChatMessages);
+  const [chatMessages, setChatMessages] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [totalWagered, setTotalWagered] = useState(0);
+  const [totalWon, setTotalWon] = useState(0);
   
   // Xeris wallet states
   const [walletConnected, setWalletConnected] = useState(false);
@@ -41,11 +40,53 @@ const RocketGamePage = () => {
   // User stats for display
   const userStats = {
     balance: balance,
-    totalWagered: 0,
-    totalWon: 0,
-    biggestWin: gameHistory.length > 0 ? Math.max(...gameHistory.map(h => h.multiplier)) : 0,
+    totalWagered: totalWagered,
+    totalWon: totalWon,
+    biggestWin: gameHistory.length > 0 ? Math.max(...gameHistory.map(h => h.multiplier * (h.bet_amount || 0))) : 0,
     gamesPlayed: gameHistory.length,
   };
+
+  // Fetch real game history from backend
+  const fetchGameHistory = useCallback(async () => {
+    try {
+      const response = await fetch(`${SOCKET_URL}/api/game/history`);
+      if (response.ok) {
+        const data = await response.json();
+        setGameHistory(data.history || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch game history:", err);
+    }
+  }, []);
+
+  // Fetch real leaderboard from backend
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const response = await fetch(`${SOCKET_URL}/api/leaderboard`);
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch leaderboard:", err);
+    }
+  }, []);
+
+  // Fetch user stats from backend
+  const fetchUserStats = useCallback(async () => {
+    if (!walletConnected || !pubKey) return;
+    
+    try {
+      const response = await fetch(`${SOCKET_URL}/api/user/stats/${pubKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTotalWagered(data.total_wagered || 0);
+        setTotalWon(data.total_won || 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch user stats:", err);
+    }
+  }, [walletConnected, pubKey]);
 
   // Sync balance from blockchain
   const syncBalance = useCallback(async () => {
@@ -265,14 +306,42 @@ const RocketGamePage = () => {
       setCountdown(data.seconds || data);
     });
 
+    socket.on('live_bets', (data) => {
+      // Update live bets from server
+      setLiveBets(data.bets || []);
+    });
+
+    socket.on('chat_message', (data) => {
+      // Add new chat message from server
+      const newMessage = {
+        id: Date.now(),
+        username: data.username || 'Anonymous',
+        text: data.text,
+        timestamp: new Date(data.timestamp || Date.now()),
+        type: data.type || 'chat',
+      };
+      setChatMessages((prev) => [...prev, newMessage].slice(-50)); // Keep last 50 messages
+    });
+
     socket.on('disconnect', () => {
       console.log('Disconnected from game server');
     });
 
+    // Fetch initial data
+    fetchGameHistory();
+    fetchLeaderboard();
+
     return () => {
       if (socket) socket.disconnect();
     };
-  }, [activeBet, handleCashOut]);
+  }, [activeBet, handleCashOut, fetchGameHistory, fetchLeaderboard]);
+
+  // Fetch user stats when wallet connects
+  useEffect(() => {
+    if (walletConnected && pubKey) {
+      fetchUserStats();
+    }
+  }, [walletConnected, pubKey, fetchUserStats]);
 
   const handlePlaceBet = (betAmount, autoCashoutValue) => {
     if (betAmount > balance) return;
@@ -296,6 +365,19 @@ const RocketGamePage = () => {
   };
 
   const handleSendChatMessage = (message) => {
+    if (!message.trim()) return;
+    
+    // Send message to server via Socket.io
+    if (socketRef.current) {
+      socketRef.current.emit('send_message', {
+        username: walletConnected ? pubKey.substring(0, 8) + '...' : 'Anonymous',
+        text: message,
+        timestamp: new Date().toISOString(),
+        type: 'chat',
+      });
+    }
+    
+    // Add to local state immediately for instant feedback
     const newMessage = {
       id: Date.now(),
       username: "You",
@@ -550,7 +632,7 @@ const RocketGamePage = () => {
             </TabsContent>
             <TabsContent value="history" className="mt-4 space-y-4">
               <GameHistory history={gameHistory} />
-              <Leaderboard leaders={mockLeaderboard} />
+              <Leaderboard leaders={leaderboard} />
             </TabsContent>
           </Tabs>
         </div>
@@ -603,7 +685,7 @@ const RocketGamePage = () => {
         {/* Bottom Section - Desktop Only */}
         <div className="hidden lg:grid grid-cols-2 gap-6 mt-6">
           <GameHistory history={gameHistory} />
-          <Leaderboard leaders={mockLeaderboard} />
+          <Leaderboard leaders={leaderboard} />
         </div>
       </main>
 
