@@ -30,7 +30,7 @@ const getBackendURL = () => {
   // Double-check we have both parts
   if (!host) {
     console.error('Unable to determine backend URL');
-    return 'https://pump-xeris-production-7aef.up.railway.app'; // Emergency fallback
+    return 'https://stunning-nurturing-production-5e0e.up.railway.app'; // Emergency fallback
   }
   
   return `${protocol}//${host}`;
