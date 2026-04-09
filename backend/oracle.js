@@ -9,7 +9,7 @@ const client = XerisClient.testnet();
 
 // For production, load your saved vault keypair here:
 // const vault = XerisKeypair.fromJsonFile("vault-keypair.json");
-const vault = XerisKeypair.generate();
+const vault = process.env.CASINO_SECRET_KEY ? XerisKeypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.CASINO_SECRET_KEY))) : XerisKeypair.generate();
 console.log("========================================");
 console.log("🏦 XERIS ORACLE VAULT INITIALIZED");
 console.log("Vault Address:", vault.publicKey);
