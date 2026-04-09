@@ -70,8 +70,8 @@ const GameHistory = ({ history }) => {
                       <div className="text-xs text-rose-400 font-semibold uppercase">
                         Crashed
                       </div>
-                      <div className="text-xs text-gray-500">
-                        Round #{game.id}
+                      <div className="text-xs font-mono text-gray-500 cursor-pointer hover:text-cyan-400 transition-colors bg-gray-800/50 px-2 py-1 rounded border border-gray-700 mt-1" onClick={() => { navigator.clipboard.writeText(game.server_seed_hash || game.id); alert("✅ Provably Fair Hash Copied to Clipboard!"); }}>
+                        {game.server_seed_hash ? game.server_seed_hash.substring(0, 8) + "..." : "Copy Hash"}
                       </div>
                     </div>
                   </div>

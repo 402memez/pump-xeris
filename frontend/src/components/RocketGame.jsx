@@ -26,7 +26,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
     lastMultiplierRef.current = currentMultiplier;
     
     if (gameState === "flying") {
-      const progress = Math.min(currentMultiplierRef.current / 15, 1);
+      const progress = currentMultiplierRef.current / Math.max(2, currentMultiplierRef.current * 1.25);
       const x = 5 + progress * 90;
       
       let y;
@@ -112,7 +112,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         const steps = 50;
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;
-          const progress = t * Math.min(currentMultiplierRef.current / 15, 1);
+          const progress = t * currentMultiplierRef.current / Math.max(2, currentMultiplierRef.current * 1.25);
           const px = 5 + progress * 90;
           
           let py;
