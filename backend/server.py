@@ -618,3 +618,4 @@ async def shutdown_db_client():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(socket_asgi_app, host="0.0.0.0", port=int(sys.argv[sys.argv.index('--port') + 1]) if '--port' in sys.argv else 8000)
+
