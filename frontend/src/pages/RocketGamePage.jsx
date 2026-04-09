@@ -322,7 +322,7 @@ const RocketGamePage = () => {
       
       // Smooth interpolation
       if (Math.abs(target - current) > 0.01) {
-        const newValue = current + (target - current) * 0.4; // Faster interpolation
+        const newValue = current + (target - current) * 0.15; // Faster interpolation
         multiplierRef.current = newValue;
         setCurrentMultiplier(newValue);
       } else {

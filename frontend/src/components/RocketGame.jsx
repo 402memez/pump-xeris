@@ -9,6 +9,15 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
   const animationRef = useRef(null);
   const lastMultiplierRef = useRef(1.0);
 
+  // PERFORMANCE FIX: Mutable refs to prevent canvas teardown
+  const currentMultiplierRef = useRef(currentMultiplier);
+  const rocketPositionRef = useRef(rocketPosition);
+  
+  useEffect(() => {
+    currentMultiplierRef.current = currentMultiplier;
+    rocketPositionRef.current = rocketPosition;
+  }, [currentMultiplier, rocketPosition]);
+
   useEffect(() => {
     // ULTRA-OPTIMIZED: Only update if multiplier changed significantly
     if (Math.abs(currentMultiplier - lastMultiplierRef.current) < 0.01 && gameState === "flying") {
@@ -17,7 +26,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
     lastMultiplierRef.current = currentMultiplier;
     
     if (gameState === "flying") {
-      const progress = Math.min(currentMultiplier / 15, 1);
+      const progress = Math.min(currentMultiplierRef.current / 15, 1);
       const x = 5 + progress * 90;
       
       let y;
@@ -83,8 +92,8 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
       if (gameState === "flying") {
         const gradient = ctx.createLinearGradient(
           0, height,
-          (rocketPosition.x / 100) * width,
-          (rocketPosition.y / 100) * height
+          (rocketPositionRef.current.x / 100) * width,
+          (rocketPositionRef.current.y / 100) * height
         );
         gradient.addColorStop(0, "rgba(52, 211, 153, 0.2)");
         gradient.addColorStop(0.5, "rgba(16, 185, 129, 0.6)");
@@ -103,7 +112,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         const steps = 50;
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;
-          const progress = t * Math.min(currentMultiplier / 15, 1);
+          const progress = t * Math.min(currentMultiplierRef.current / 15, 1);
           const px = 5 + progress * 90;
           
           let py;
@@ -145,7 +154,7 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, rocketPosition, currentMultiplier]);
+  }, [gameState]);
 
   const getMultiplierColor = () => {
     if (currentMultiplier < 2) return "from-emerald-400 to-teal-400";
@@ -169,8 +178,8 @@ const RocketGame = ({ gameState, currentMultiplier, onCashOut }) => {
         <div
           className="absolute z-20"
           style={{
-            left: `${rocketPosition.x}%`,
-            top: `${rocketPosition.y}%`,
+            left: `${rocketPositionRef.current.x}%`,
+            top: `${rocketPositionRef.current.y}%`,
             transform: `translate(-50%, -50%) rotate(${rocketRotation}deg) translateZ(0)`, willChange: "transform, left, top",
           }}
         >
