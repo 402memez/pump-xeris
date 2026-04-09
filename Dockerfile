@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy your entire project into the container
 COPY . .
 
-# Install Python dependencies
-RUN pip install requests flask-socketio eventlet
+# Install Python dependencies (Added fastapi and uvicorn!)
+RUN pip install requests flask-socketio eventlet fastapi uvicorn
 
 # Install Node.js dependencies for the Xeris Oracle
 RUN cd backend && npm install xeris-sdk express
@@ -16,5 +16,5 @@ RUN cd backend && npm install xeris-sdk express
 EXPOSE 8000
 EXPOSE 3000
 
-# Run the boot script we made
+# Run the boot script
 CMD ["bash", "start.sh"]
