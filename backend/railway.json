@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/railwayapp/nixpacks/main/schema.json",
+  "providers": ["python", "node"],
+  "build": {
+    "nixPkgs": ["python311", "nodejs_20"]
+  }
+}
