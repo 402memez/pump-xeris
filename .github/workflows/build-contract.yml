@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'smart-contract/**'
-  workflow_dispatch: # Allows you to manually trigger the build
+  workflow_dispatch:
 
 jobs:
   build-anchor-program:
