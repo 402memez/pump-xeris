@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy your entire project into the container
 COPY . .
 
-# Install Python dependencies (Added python-dotenv!)
-RUN pip install requests flask-socketio eventlet fastapi uvicorn python-dotenv
+# Install Python dependencies (Added motor!)
+RUN pip install requests flask-socketio eventlet fastapi uvicorn python-dotenv motor
 
 # Install Node.js dependencies for the Xeris Oracle
 RUN cd backend && npm install xeris-sdk express
