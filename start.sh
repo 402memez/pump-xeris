@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "🚀 Booting Xeris Oracle..."
-node oracle.js &
+node backend/oracle.js &
 
 echo "🚀 Booting Python Game Server..."
-python3 server.py
+python3 backend/server.py
