@@ -1,4 +1,4 @@
-name: Build Xeris Smart Contract
+name: Build Xeris Smart Contract V2
 
 on:
   push:
